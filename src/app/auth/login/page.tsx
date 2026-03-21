@@ -26,7 +26,7 @@ export default function LoginPage() {
       const { data: p } = await supabase
         .from('profiles').select('role').eq('id', data.user.id).single()
       const dest = p?.role === 'admin' ? '/admin' : '/artist/dashboard'
-      window.location.href = dest
+      window.location.href = p?.role === "admin" ? "/admin/dashboard" : "/artist/dashboard"
     } catch (err: any) {
       setMsg('Error: ' + (err.message || 'Something went wrong'))
       setLoading(false)

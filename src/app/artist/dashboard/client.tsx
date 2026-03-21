@@ -58,6 +58,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
   const byPlatform = useMemo(()=>agg(filtered as any,'platform'),[filtered])
   const byCountry  = useMemo(()=>agg(filtered as any,'country'),[filtered])
   const byTrack    = useMemo(()=>agg(filtered as any,'track_title'),[filtered])
+  const byRelease  = useMemo(()=>agg(filtered as any,'release_title'),[filtered])
   const byYear     = useMemo(()=>{const m:Record<string,{rev:number;plays:number}>={};records.forEach((r:any)=>{if(!r.year)return;if(!m[r.year])m[r.year]={rev:0,plays:0};m[r.year].rev+=Number(r.revenue);m[r.year].plays+=r.streams});return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([y,v])=>({year:y,revenue:+v.rev.toFixed(4),streams:v.plays}));},[records])
 
   async function logout() { await createClient().auth.signOut(); window.location.href='/auth/login' }
@@ -294,6 +295,41 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                     </div>
                   </Card>
                 </div>
+
+                {/* Top Releases */}
+                <Card style={{marginTop:12}}>
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <Head title="Top Releases by Streams"/>
+                  </div>
+                  <div style={{padding:'4px 0'}}>
+                    {byRelease.slice(0,8).map((r,i)=>{
+                      const max=byRelease[0]?.plays||1
+                      const pct=Math.round((r.plays/max)*100)
+                      return(
+                        <div key={r.name} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 20px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
+                          <div style={{width:20,textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.22)',flexShrink:0}}>{i+1}</div>
+                          <div style={{width:8,height:8,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontSize:13,fontWeight:600,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginBottom:5}}>{r.name||'Unknown'}</div>
+                            <div style={{height:4,background:'rgba(99,130,255,0.1)',borderRadius:2,overflow:'hidden'}}>
+                              <div style={{height:'100%',borderRadius:2,background:PAL[i%PAL.length],width:pct+'%'}}/>
+                            </div>
+                          </div>
+                          <div style={{textAlign:'right',flexShrink:0,minWidth:80}}>
+                            <div style={{fontSize:12,color:'#fff',fontWeight:600}}>{r.plays.toLocaleString()}</div>
+                            <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:2}}>${r.rev.toFixed(4)}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {!byRelease.length&&<div style={{padding:24,textAlign:'center',fontSize:12,color:'rgba(255,255,255,0.25)'}}>No release data</div>}
+                  </div>
+                  <div style={{display:'flex',alignItems:'center',gap:12,padding:'6px 20px',borderTop:'1px solid rgba(99,130,255,0.1)',background:'rgba(99,130,255,0.03)'}}>
+                    <div style={{width:20}}/><div style={{width:8}}/>
+                    <div style={{flex:1,fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>RELEASE</div>
+                    <div style={{minWidth:80,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>STREAMS · REV</div>
+                  </div>
+                </Card>
               </div>
             )}
 

@@ -13,17 +13,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com"/>
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/>
-        <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
         <meta name="theme-color" content="#040e2b"/>
       </head>
-      <body style={{ margin: 0, padding: 0, fontFamily: "'Syne', sans-serif" }}>
+      <body style={{ margin:0, padding:0, fontFamily:"'Inter', sans-serif", color:'#ffffff', background:'#030c24' }}>
         {children}
         <Toaster
           position="top-right"
           toastOptions={{
-            style: { background: '#071535', color: '#fff', border: '1px solid #1a3080' },
-            success: { iconTheme: { primary: '#22d36b', secondary: '#071535' } },
-            error: { iconTheme: { primary: '#ff5566', secondary: '#071535' } },
+            style: { background:'#071535', color:'#fff', border:'1px solid #1a3080' },
+            success: { iconTheme: { primary:'#22d36b', secondary:'#071535' } },
+            error: { iconTheme: { primary:'#ff5566', secondary:'#071535' } },
           }}
         />
       </body>

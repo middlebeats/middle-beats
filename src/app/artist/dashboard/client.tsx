@@ -15,7 +15,7 @@ const TT = {
   itemStyle:{color:'#fff'}
 }
 
-const sans = 'Syne, sans-serif'
+const sans = 'Inter, Syne, sans-serif'
 const mono = 'DM Mono, monospace'
 
 interface Props {
@@ -124,16 +124,15 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
 
       <div style={{display:'flex',minHeight:'calc(100vh - 60px)'}}>
         {/* SIDEBAR */}
-        <aside style={{width:200,borderRight:'1px solid rgba(59,130,246,0.1)',padding:'20px 0',background:'rgba(3,12,36,0.7)',flexShrink:0,position:'sticky',top:60,height:'calc(100vh - 60px)'}}>
+        <aside style={{width:200,borderRight:'1px solid rgba(59,130,246,0.1)',padding:'20px 0',background:'rgba(8,25,70,0.95)',flexShrink:0,position:'sticky',top:60,height:'calc(100vh - 60px)'}}>
           {/* Artist info - clean, no truncation issues */}
-          <div style={{padding:'0 16px 16px',borderBottom:'1px solid rgba(59,130,246,0.1)',marginBottom:8}}>
-            <div style={{width:38,height:38,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:700,background:'linear-gradient(135deg,#1a55e8,#06b6d4)',marginBottom:10}}>{artist.name.charAt(0)}</div>
-            <div style={{fontSize:14,fontWeight:700,color:'#fff',lineHeight:1.3,wordBreak:'break-word'}}>{artist.name}</div>
-            <div style={{fontFamily:mono,fontSize:10,color:'rgba(125,163,252,0.35)',marginTop:4,fontWeight:300,wordBreak:'break-all'}}>{artist.email}</div>
+          <div style={{padding:'16px',borderBottom:'1px solid rgba(255,255,255,0.08)',marginBottom:8}}>
+            <div style={{fontSize:16,fontWeight:800,color:'#ffffff',lineHeight:1.3,letterSpacing:0.3,fontFamily:sans}}>{artist.name}</div>
+            <div style={{fontFamily:mono,fontSize:10,color:'rgba(200,220,255,0.5)',marginTop:5,fontWeight:300,wordBreak:'break-all'}}>{artist.email}</div>
           </div>
 
           {tabs.map(tab => (
-            <button key={tab} onClick={()=>setActiveTab(tab)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 16px',width:'100%',background: activeTab===tab?'rgba(59,130,246,0.12)':'transparent',border:'none',borderLeft: activeTab===tab?'2px solid #3b82f6':'2px solid transparent',color: activeTab===tab?'#fff':'rgba(200,216,248,0.38)',cursor:'pointer',fontSize:12,fontFamily:sans,fontWeight: activeTab===tab?600:400,textAlign:'left',textTransform:'capitalize',transition:'all 0.15s'}}>
+            <button key={tab} onClick={()=>setActiveTab(tab)} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 16px',width:'100%',background: activeTab===tab?'rgba(59,130,246,0.12)':'transparent',border:'none',borderLeft: activeTab===tab?'2px solid #3b82f6':'2px solid transparent',color: activeTab===tab?'#fff':'rgba(255,255,255,0.65)',cursor:'pointer',fontSize:12,fontFamily:sans,fontWeight: activeTab===tab?600:400,textAlign:'left',textTransform:'capitalize',transition:'all 0.15s'}}>
               <span style={{fontSize:13}}>
                 {tab==='overview'?'📊':tab==='platforms'?'🏪':tab==='countries'?'🌍':tab==='tracks'?'🎵':'📈'}
               </span>
@@ -141,7 +140,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             </button>
           ))}
 
-          <button onClick={logout} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 16px',width:'100%',background:'transparent',border:'none',borderLeft:'2px solid transparent',color:'rgba(200,216,248,0.2)',cursor:'pointer',fontSize:12,fontFamily:sans,textAlign:'left',marginTop:8}}>
+          <button onClick={logout} style={{display:'flex',alignItems:'center',gap:10,padding:'9px 16px',width:'100%',background:'transparent',border:'none',borderLeft:'2px solid transparent',color:'rgba(255,255,255,0.4)',cursor:'pointer',fontSize:12,fontFamily:sans,textAlign:'left',marginTop:8}}>
             <span>🚪</span> Sign Out
           </button>
         </aside>

@@ -214,23 +214,23 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                       const pct = Math.round((p.rev/max)*100)
                       const totalPct = totalRev > 0 ? ((p.rev/totalRev)*100).toFixed(1) : '0'
                       return (
-                        <div key={p.name} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 20px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
+                        <div key={p.name} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 14px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
                           {/* Rank */}
                           <div style={{width:20,textAlign:'right',fontSize:11,color:'rgba(255,255,255,0.25)',flexShrink:0,fontWeight:500}}>{i+1}</div>
                           {/* Color dot */}
-                          <div style={{width:8,height:8,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
+                          <div style={{width:7,height:7,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
                           {/* Name */}
-                          <div style={{width:130,fontSize:13,fontWeight:500,color:'#fff',flexShrink:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.name}</div>
+                          <div style={{width:110,fontSize:12,fontWeight:500,color:'#fff',flexShrink:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.name}</div>
                           {/* Bar */}
                           <div style={{flex:1,height:6,background:'rgba(99,130,255,0.1)',borderRadius:3,overflow:'hidden'}}>
                             <div style={{height:'100%',borderRadius:3,background:PAL[i%PAL.length],width:pct+'%',transition:'width 0.6s ease'}}/>
                           </div>
                           {/* % */}
-                          <div style={{width:42,textAlign:'right',fontSize:11,color:'rgba(255,255,255,0.4)',flexShrink:0,fontWeight:400}}>{totalPct}%</div>
+                          <div style={{width:38,textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.4)',flexShrink:0,fontWeight:400}}>{totalPct}%</div>
                           {/* Revenue */}
-                          <div style={{width:70,textAlign:'right',fontSize:12,color:PAL[i%PAL.length],flexShrink:0,fontWeight:600}}>${p.rev.toFixed(4)}</div>
+                          <div style={{width:65,textAlign:'right',fontSize:11,color:PAL[i%PAL.length],flexShrink:0,fontWeight:600}}>${p.rev.toFixed(4)}</div>
                           {/* Streams */}
-                          <div style={{width:80,textAlign:'right',fontSize:11,color:'rgba(255,255,255,0.3)',flexShrink:0}}>{p.plays.toLocaleString()}</div>
+                          <div style={{width:70,textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.3)',flexShrink:0}}>{p.plays.toLocaleString()}</div>
                         </div>
                       )
                     })}
@@ -245,7 +245,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                     <div style={{flex:1}}/>
                     <div style={{width:42,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>SHARE</div>
                     <div style={{width:70,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>REVENUE</div>
-                    <div style={{width:80,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>STREAMS</div>
+                    <div style={{width:70,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>STREAMS</div>
                   </div>
                 </Card>
                 {/* Countries + Monthly side by side */}
@@ -306,9 +306,9 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                       const max=byRelease[0]?.plays||1
                       const pct=Math.round((r.plays/max)*100)
                       return(
-                        <div key={r.name} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 20px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
-                          <div style={{width:20,textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.22)',flexShrink:0}}>{i+1}</div>
-                          <div style={{width:8,height:8,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
+                        <div key={r.name} style={{display:'flex',alignItems:'center',gap:8,padding:'9px 14px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
+                          <div style={{width:16,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.22)',flexShrink:0}}>{i+1}</div>
+                          <div style={{width:7,height:7,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
                           <div style={{flex:1,minWidth:0}}>
                             <div style={{fontSize:13,fontWeight:600,color:'#fff',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',marginBottom:5}}>{r.name||'Unknown'}</div>
                             <div style={{height:4,background:'rgba(99,130,255,0.1)',borderRadius:2,overflow:'hidden'}}>
@@ -324,7 +324,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                     })}
                     {!byRelease.length&&<div style={{padding:24,textAlign:'center',fontSize:12,color:'rgba(255,255,255,0.25)'}}>No release data</div>}
                   </div>
-                  <div style={{display:'flex',alignItems:'center',gap:12,padding:'6px 20px',borderTop:'1px solid rgba(99,130,255,0.1)',background:'rgba(99,130,255,0.03)'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,padding:'6px 14px',borderTop:'1px solid rgba(99,130,255,0.1)',background:'rgba(99,130,255,0.03)'}}>
                     <div style={{width:20}}/><div style={{width:8}}/>
                     <div style={{flex:1,fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>RELEASE</div>
                     <div style={{minWidth:80,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>STREAMS · REV</div>

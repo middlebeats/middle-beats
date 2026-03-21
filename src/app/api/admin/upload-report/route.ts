@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createAdminClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { parseCSV } from '@/lib/csv-parser'
+
+export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const authHeader = request.headers.get('Authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    const adminSupabase = createAdminClient()
+    const { data: { user }, error: authError } = await adminSupabase.auth.getUser(token)
+    if (authError || !user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { data: profile } = await adminSupabase.from('profiles').select('role').eq('id', user.id).single()
     if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const formData = await request.formData()
@@ -17,32 +23,25 @@ export async function POST(request: NextRequest) {
 
     const csvText = await file.text()
     const { records, source, rowCount } = parseCSV(csvText)
+    if (!rowCount) return NextResponse.json({ error: 'No valid records found' }, { status: 400 })
 
-    if (!rowCount) return NextResponse.json({ error: 'No valid records found in file' }, { status: 400 })
-
-    const adminSupabase = createAdminClient()
-
-    // Load all artists for matching
     const { data: artists } = await adminSupabase.from('artists').select('id, name, name_ar')
-    const artistMap = new Map<string, string>() // name → id
+    const artistMap = new Map<string, string>()
     for (const a of (artists || [])) {
       artistMap.set(a.name.toLowerCase().trim(), a.id)
       if (a.name_ar) artistMap.set(a.name_ar.trim(), a.id)
     }
 
-    // Create upload record
     const { data: upload } = await adminSupabase
       .from('report_uploads')
       .insert({ filename: file.name, source, row_count: rowCount, uploaded_by: user.id })
       .select().single()
 
-    // Match records to artists and insert
     const toInsert = []
     const unmatched = new Set<string>()
 
     for (const rec of records) {
       const artistName = rec.artist_name.toLowerCase().trim()
-      // Try exact match, then partial match
       let artistId = artistMap.get(artistName)
       if (!artistId) {
         for (const [name, id] of artistMap) {
@@ -69,24 +68,13 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Batch insert in chunks of 500
     const CHUNK = 500
     for (let i = 0; i < toInsert.length; i += CHUNK) {
-      const chunk = toInsert.slice(i, i + CHUNK)
-      await adminSupabase.from('royalty_records').insert(chunk)
+      await adminSupabase.from('royalty_records').insert(toInsert.slice(i, i + CHUNK))
     }
 
-    return NextResponse.json({
-      source,
-      rowCount,
-      matched: toInsert.length,
-      unmatched: [...unmatched],
-    })
+    return NextResponse.json({ source, rowCount, matched: toInsert.length, unmatched: [...unmatched] })
   } catch (err: any) {
-    console.error('Upload error:', err)
     return NextResponse.json({ error: err.message || 'Processing failed' }, { status: 500 })
   }
 }
-
-// Allow large file uploads
-export const maxDuration = 60

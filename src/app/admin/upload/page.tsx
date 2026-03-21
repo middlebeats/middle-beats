@@ -1,14 +1,9 @@
 'use client'
-import { useState, useCallback } from 'react'
-import AdminLayout from '@/components/admin/Layout'
-import toast from 'react-hot-toast'
+import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 interface UploadResult {
-  filename: string
-  source: string
-  rowCount: number
-  matched: number
-  unmatched: string[]
+  filename: string; source: string; rowCount: number; matched: number; unmatched: string[]
 }
 
 export default function UploadPage() {
@@ -17,11 +12,11 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [results, setResults] = useState<UploadResult[]>([])
+  const [msg, setMsg] = useState('')
 
   function handleFiles(fileList: FileList | null) {
     if (!fileList) return
     const csvFiles = Array.from(fileList).filter(f => f.name.toLowerCase().endsWith('.csv'))
-    if (csvFiles.length !== fileList.length) toast.error('Only CSV files are accepted')
     setFiles(prev => {
       const existing = new Set(prev.map(f => f.name))
       return [...prev, ...csvFiles.filter(f => !existing.has(f.name))]
@@ -30,148 +25,114 @@ export default function UploadPage() {
 
   async function handleUpload() {
     if (!files.length) return
-    setUploading(true)
-    setResults([])
-    const newResults: UploadResult[] = []
+    setUploading(true); setResults([]); setMsg('')
+    const { data: { session } } = await createClient().auth.getSession()
+    if (!session) { window.location.href = '/auth/login'; return }
 
+    const newResults: UploadResult[] = []
     for (let i = 0; i < files.length; i++) {
       setProgress(Math.round((i / files.length) * 100))
       const formData = new FormData()
       formData.append('file', files[i])
-
       try {
-        const res = await fetch('/api/admin/upload-report', { method: 'POST', body: formData })
+        const res = await fetch('/api/admin/upload-report', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+          body: formData
+        })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Upload failed')
         newResults.push({ filename: files[i].name, ...data })
-        toast.success(`${files[i].name} processed`)
+        setMsg(`success:${files[i].name} processed`)
       } catch (err: any) {
-        toast.error(`${files[i].name}: ${err.message}`)
         newResults.push({ filename: files[i].name, source: 'error', rowCount: 0, matched: 0, unmatched: [err.message] })
+        setMsg(`error:${files[i].name}: ${err.message}`)
       }
     }
-
-    setProgress(100)
-    setResults(newResults)
-    setFiles([])
-    setUploading(false)
+    setProgress(100); setResults(newResults); setFiles([]); setUploading(false)
   }
 
   return (
-    <AdminLayout activePage="upload">
-      <div className="max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Upload Store Reports</h1>
-          <p className="font-mono text-xs text-blue-300/50 mt-1 tracking-wider">
-            Supports Other Music Platforms &amp; Anghami CSV formats
-          </p>
-        </div>
+    <div style={{ minHeight:'100vh', background:'#040e2b', padding:'32px' }}>
+      <div style={{ maxWidth:760 }}>
+        <h1 style={{ fontSize:24, fontWeight:800, color:'#fff', margin:'0 0 4px' }}>Upload Store Reports</h1>
+        <p style={{ fontFamily:'monospace', fontSize:11, color:'rgba(125,163,252,0.4)', marginBottom:28 }}>Supports Other Music Platforms &amp; Anghami CSV formats</p>
 
-        {/* Drop Zone */}
+        <input type="file" id="csvInput" multiple accept=".csv" style={{ display:'none' }} onChange={e=>handleFiles(e.target.files)}/>
+
         <div
-          className={`relative border-2 border-dashed rounded-2xl p-16 text-center cursor-pointer transition-all mb-6 ${
-            dragOver ? 'border-blue-sky bg-blue-sky/8' : 'border-blue-sky/25 hover:border-blue-sky/50 hover:bg-blue-sky/3'
-          }`}
-          style={{ background: dragOver ? 'rgba(59,130,246,0.08)' : 'rgba(18,68,204,0.03)' }}
-          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={e => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files) }}
-          onClick={() => document.getElementById('csvInput')?.click()}
-        >
-          <input id="csvInput" type="file" multiple accept=".csv" className="hidden"
-            onChange={e => handleFiles(e.target.files)}/>
-          <div className="text-5xl mb-4">📂</div>
-          <div className="text-xl font-bold mb-2">Drop CSV files here</div>
-          <div className="font-mono text-xs text-blue-300/50">or click to browse</div>
-          <div className="flex justify-center gap-3 mt-4 flex-wrap">
+          style={{ border:`2px dashed ${dragOver?'rgba(59,130,246,0.8)':'rgba(59,130,246,0.25)'}`, borderRadius:16, padding:'48px 32px', textAlign:'center', cursor:'pointer', marginBottom:20, background: dragOver?'rgba(59,130,246,0.08)':'rgba(18,68,204,0.03)', transition:'all 0.2s' }}
+          onDragOver={e=>{e.preventDefault();setDragOver(true)}}
+          onDragLeave={()=>setDragOver(false)}
+          onDrop={e=>{e.preventDefault();setDragOver(false);handleFiles(e.dataTransfer.files)}}
+          onClick={()=>document.getElementById('csvInput')?.click()}>
+          <div style={{ fontSize:44, marginBottom:14 }}>📂</div>
+          <div style={{ fontSize:18, fontWeight:700, color:'#fff', marginBottom:6 }}>Drop CSV files here</div>
+          <div style={{ fontFamily:'monospace', fontSize:12, color:'rgba(125,163,252,0.5)', marginBottom:16 }}>or click to browse</div>
+          <div style={{ display:'flex', justifyContent:'center', gap:10, flexWrap:'wrap' }}>
             {['Other Music Platforms', 'Anghami'].map(s => (
-              <span key={s} className="font-mono text-xs px-3 py-1 rounded-full"
-                style={{ border: '1px solid rgba(59,130,246,0.3)', color: '#7eb8ff' }}>{s}</span>
+              <span key={s} style={{ fontFamily:'monospace', fontSize:11, padding:'3px 12px', borderRadius:20, border:'1px solid rgba(59,130,246,0.3)', color:'#7eb8ff' }}>{s}</span>
             ))}
           </div>
         </div>
 
-        {/* File List */}
         {files.length > 0 && (
-          <div className="card mb-6">
-            <div className="px-5 py-4 border-b flex items-center justify-between"
-              style={{ borderColor: 'rgba(59,130,246,0.1)' }}>
-              <span className="font-mono text-xs tracking-widest text-blue-300/60 uppercase">{files.length} file{files.length > 1 ? 's' : ''} ready</span>
-              <button onClick={() => setFiles([])} className="font-mono text-xs text-red-400 hover:text-red-300">Clear all</button>
+          <div style={{ background:'rgba(7,21,53,1)', border:'1px solid rgba(59,130,246,0.15)', borderRadius:12, marginBottom:20, overflow:'hidden' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', padding:'14px 20px', borderBottom:'1px solid rgba(59,130,246,0.1)' }}>
+              <span style={{ fontFamily:'monospace', fontSize:11, color:'rgba(200,216,248,0.6)', letterSpacing:2 }}>{files.length} FILE{files.length>1?'S':''} READY</span>
+              <button onClick={()=>setFiles([])} style={{ background:'transparent', border:'none', color:'rgba(255,80,80,0.7)', fontFamily:'monospace', fontSize:11, cursor:'pointer' }}>Clear all</button>
             </div>
-            <div className="divide-y" style={{ borderColor: 'rgba(59,130,246,0.06)' }}>
-              {files.map((f, i) => (
-                <div key={f.name} className="flex items-center gap-3 px-5 py-3">
-                  <span className="text-lg">📄</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-mono text-xs text-blue-200 truncate">{f.name}</div>
-                    <div className="font-mono text-xs text-blue-300/40">{(f.size / 1024).toFixed(1)} KB</div>
-                  </div>
-                  <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
-                    className="text-blue-300/40 hover:text-red-400 font-mono text-sm transition-colors">✕</button>
+            {files.map((f,i) => (
+              <div key={f.name} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 20px', borderBottom:'1px solid rgba(59,130,246,0.06)' }}>
+                <span>📄</span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontFamily:'monospace', fontSize:11, color:'rgba(200,216,248,0.8)' }}>{f.name}</div>
+                  <div style={{ fontFamily:'monospace', fontSize:10, color:'rgba(90,122,184,0.5)' }}>{(f.size/1024).toFixed(1)} KB</div>
                 </div>
-              ))}
-            </div>
+                <button onClick={()=>setFiles(p=>p.filter((_,j)=>j!==i))} style={{ background:'transparent', border:'none', color:'rgba(90,122,184,0.5)', cursor:'pointer', fontSize:16 }}>✕</button>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Progress */}
         {uploading && (
-          <div className="mb-6">
-            <div className="flex justify-between font-mono text-xs text-blue-300/60 mb-2">
+          <div style={{ marginBottom:20 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'monospace', fontSize:11, color:'rgba(125,163,252,0.5)', marginBottom:8 }}>
               <span>Processing…</span><span>{progress}%</span>
             </div>
-            <div className="h-1.5 rounded-full" style={{ background: 'rgba(59,130,246,0.15)' }}>
-              <div className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${progress}%`, background: 'linear-gradient(90deg,#1a55e8,#3b82f6)' }}/>
+            <div style={{ height:4, background:'rgba(59,130,246,0.15)', borderRadius:2 }}>
+              <div style={{ height:'100%', background:'linear-gradient(90deg,#1a55e8,#3b82f6)', borderRadius:2, width:`${progress}%`, transition:'width 0.4s' }}/>
             </div>
           </div>
         )}
 
-        <button onClick={handleUpload} disabled={!files.length || uploading} className="btn-primary mb-8">
-          {uploading ? 'Processing…' : `⚡ Process ${files.length || ''} Report${files.length !== 1 ? 's' : ''}`}
+        <button onClick={handleUpload} disabled={!files.length||uploading} style={{ padding:'12px 28px', background: (!files.length||uploading)?'rgba(26,85,232,0.3)':'linear-gradient(135deg,#1a55e8,#1244cc)', color:'#fff', border:'none', borderRadius:10, fontFamily:'monospace', fontSize:11, letterSpacing:2, fontWeight:700, cursor:(!files.length||uploading)?'not-allowed':'pointer', textTransform:'uppercase', marginBottom:28, boxShadow:(!files.length||uploading)?'none':'0 4px 20px rgba(26,85,232,0.4)' }}>
+          {uploading ? 'Processing…' : `⚡ Process ${files.length||''} Report${files.length!==1?'s':''}`}
         </button>
 
-        {/* Results */}
         {results.length > 0 && (
-          <div className="card">
-            <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(59,130,246,0.1)' }}>
-              <span className="font-mono text-xs tracking-widest text-blue-300/60 uppercase">Upload Results</span>
-            </div>
-            <div className="divide-y" style={{ borderColor: 'rgba(59,130,246,0.06)' }}>
-              {results.map(r => (
-                <div key={r.filename} className="px-5 py-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{r.source === 'error' ? '❌' : '✅'}</span>
-                      <div>
-                        <div className="font-mono text-xs text-blue-200 font-bold">{r.filename}</div>
-                        {r.source !== 'error' && (
-                          <div className="font-mono text-xs text-blue-300/50 mt-0.5">
-                            {r.rowCount} rows · {r.matched} matched to artists
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {r.source !== 'error' && (
-                      <span className={`font-mono text-xs px-2 py-0.5 rounded ${
-                        r.source === 'anghami' ? 'badge-anghami' : 'badge-platform'
-                      }`}>{r.source === 'anghami' ? 'Anghami' : 'Platform'}</span>
-                    )}
+          <div style={{ background:'rgba(7,21,53,1)', border:'1px solid rgba(59,130,246,0.15)', borderRadius:12, overflow:'hidden' }}>
+            <div style={{ padding:'14px 20px', borderBottom:'1px solid rgba(59,130,246,0.1)', fontFamily:'monospace', fontSize:10, letterSpacing:2, color:'rgba(200,216,248,0.5)', textTransform:'uppercase' }}>Upload Results</div>
+            {results.map(r => (
+              <div key={r.filename} style={{ padding:'16px 20px', borderBottom:'1px solid rgba(59,130,246,0.06)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom: r.unmatched?.length?8:0 }}>
+                  <span>{r.source==='error'?'❌':'✅'}</span>
+                  <div>
+                    <div style={{ fontFamily:'monospace', fontSize:11, color:'rgba(200,216,248,0.9)', fontWeight:700 }}>{r.filename}</div>
+                    {r.source!=='error' && <div style={{ fontFamily:'monospace', fontSize:10, color:'rgba(90,122,184,0.5)', marginTop:2 }}>{r.rowCount} rows · {r.matched} matched to artists</div>}
                   </div>
-                  {r.unmatched.length > 0 && r.source !== 'error' && (
-                    <div className="mt-3 p-3 rounded-lg font-mono text-xs"
-                      style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#fbbf24' }}>
-                      ⚠️ Unmatched artists: {r.unmatched.slice(0, 5).join(', ')}
-                      {r.unmatched.length > 5 && ` + ${r.unmatched.length - 5} more`}
-                    </div>
-                  )}
+                  {r.source!=='error' && <span style={{ marginLeft:'auto', fontFamily:'monospace', fontSize:9, padding:'2px 8px', borderRadius:3, background:r.source==='anghami'?'rgba(255,80,100,0.1)':'rgba(59,130,246,0.1)', color:r.source==='anghami'?'#ff8090':'#7eb8ff' }}>{r.source==='anghami'?'ANGHAMI':'PLATFORM'}</span>}
                 </div>
-              ))}
-            </div>
+                {r.unmatched?.length>0 && r.source!=='error' && (
+                  <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', color:'#fbbf24', fontSize:11, fontFamily:'monospace' }}>
+                    ⚠️ Unmatched artists: {r.unmatched.slice(0,5).join(', ')}{r.unmatched.length>5?` +${r.unmatched.length-5} more`:''}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
-    </AdminLayout>
+    </div>
   )
 }

@@ -8,6 +8,7 @@ interface UploadResult {
   rowCount: number
   matched: number
   unmatched: string[]
+  autoCreated?: string[]
   error?: string
 }
 
@@ -157,10 +158,14 @@ export default function UploadPage() {
                     </span>
                   )}
                 </div>
+                {r.autoCreated && r.autoCreated.length > 0 && (
+                  <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(34,197,94,0.07)', border:'1px solid rgba(34,197,94,0.2)', color:'#86efac', fontSize:11, fontFamily:'monospace', marginLeft:26, marginTop:6 }}>
+                    ✨ Auto-created {r.autoCreated.length} new artist{r.autoCreated.length>1?'s':''}: {r.autoCreated.join(', ')}
+                  </div>
+                )}
                 {r.unmatched?.length > 0 && (
-                  <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.2)', color:'#fbbf24', fontSize:11, fontFamily:'monospace', marginLeft:26 }}>
-                    ⚠️ Unmatched artists (not in system): {r.unmatched.join(', ')}
-                    <div style={{ marginTop:4, fontSize:10, color:'rgba(251,191,36,0.6)' }}>Add these artists first via Artists → Add Artist</div>
+                  <div style={{ padding:'8px 12px', borderRadius:6, background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.2)', color:'#fbbf24', fontSize:11, fontFamily:'monospace', marginLeft:26, marginTop:6 }}>
+                    ⚠️ Still unmatched: {r.unmatched.join(', ')}
                   </div>
                 )}
               </div>

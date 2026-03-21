@@ -89,7 +89,7 @@ export default function HomePage() {
 
           {/* Logo */}
           <div className="fade1" style={{marginBottom:12}}>
-            <img src={LOGO_SRC} alt="MIDDLE BEATS" style={{height:'auto',width:'min(320px, 75vw)',display:'block',objectFit:'contain'}}/>
+            <img src={LOGO_SRC} alt="MIDDLE BEATS" style={{height:'auto',width:'min(480px, 85vw)',display:'block',objectFit:'contain'}}/>
           </div>
 
           {/* Tagline */}

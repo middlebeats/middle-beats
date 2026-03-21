@@ -69,8 +69,8 @@ function normalizeAnghamiRow(row: Record<string, string>): NormalizedRecord[] {
     const parts = rawP.split('/')
     const month = parts[0].padStart(2, '0')
     const rawYear = parts[parts.length - 1]
-    const yr = rawYear.length === 2 ? '20' + rawYear : rawYear
-    period = `${yr}-${month}`
+    const year = rawYear.length === 2 ? '20' + rawYear : rawYear
+    period = `${year}-${month}`
   }
   const year = period.substring(0, 4)
   const rawArtist = (row['Artist Name'] || row['artist name'] || row['Album Artist Name'] || '').trim()

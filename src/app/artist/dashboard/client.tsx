@@ -203,20 +203,47 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             {/* OVERVIEW */}
             {tab==='overview'&&(
               <div>
-                {/* Platform - full width horizontal bar chart */}
+                {/* Platform - custom professional table+bar */}
                 <Card style={{marginBottom:12}}>
                   <Head title="Revenue by Platform"/>
-                  <div style={{padding:'12px 16px'}}>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={byPlatform.slice(0,10)} layout="vertical" margin={{left:8,right:20}}>
-                        <XAxis type="number" tick={{fill:'rgba(255,255,255,0.4)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false} tickFormatter={(v)=>'$'+v.toFixed(3)}/>
-                        <YAxis type="category" dataKey="name" tick={{fill:'#ffffff',fontSize:11,fontFamily:'Inter',fontWeight:500}} axisLine={false} tickLine={false} width={120}/>
-                        <Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(6),'Revenue']}/>
-                        <Bar dataKey="rev" radius={[0,6,6,0]} label={{position:'right',fill:'rgba(255,255,255,0.5)',fontSize:9,fontFamily:'Inter',formatter:(v:number)=>'$'+v.toFixed(4)}}>
-                          {byPlatform.slice(0,10).map((_,i)=><Cell key={i} fill={PAL[i%PAL.length]}/>)}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                  <div style={{padding:'8px 0'}}>
+                    {byPlatform.slice(0,10).map((p,i)=>{
+                      const max = byPlatform[0]?.rev || 1
+                      const pct = Math.round((p.rev/max)*100)
+                      const totalPct = totalRev > 0 ? ((p.rev/totalRev)*100).toFixed(1) : '0'
+                      return (
+                        <div key={p.name} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 20px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
+                          {/* Rank */}
+                          <div style={{width:20,textAlign:'right',fontSize:11,color:'rgba(255,255,255,0.25)',flexShrink:0,fontWeight:500}}>{i+1}</div>
+                          {/* Color dot */}
+                          <div style={{width:8,height:8,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
+                          {/* Name */}
+                          <div style={{width:130,fontSize:13,fontWeight:500,color:'#fff',flexShrink:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{p.name}</div>
+                          {/* Bar */}
+                          <div style={{flex:1,height:6,background:'rgba(99,130,255,0.1)',borderRadius:3,overflow:'hidden'}}>
+                            <div style={{height:'100%',borderRadius:3,background:PAL[i%PAL.length],width:pct+'%',transition:'width 0.6s ease'}}/>
+                          </div>
+                          {/* % */}
+                          <div style={{width:42,textAlign:'right',fontSize:11,color:'rgba(255,255,255,0.4)',flexShrink:0,fontWeight:400}}>{totalPct}%</div>
+                          {/* Revenue */}
+                          <div style={{width:70,textAlign:'right',fontSize:12,color:PAL[i%PAL.length],flexShrink:0,fontWeight:600}}>${p.rev.toFixed(4)}</div>
+                          {/* Streams */}
+                          <div style={{width:80,textAlign:'right',fontSize:11,color:'rgba(255,255,255,0.3)',flexShrink:0}}>{p.plays.toLocaleString()}</div>
+                        </div>
+                      )
+                    })}
+                    {!byPlatform.length&&<div style={{padding:32,textAlign:'center',fontSize:12,color:'rgba(255,255,255,0.25)'}}>No platform data yet</div>}
+                    {/* Header row */}
+                  </div>
+                  {/* Column headers */}
+                  <div style={{display:'flex',alignItems:'center',gap:12,padding:'8px 20px',borderTop:'1px solid rgba(99,130,255,0.1)',background:'rgba(99,130,255,0.03)'}}>
+                    <div style={{width:20}}/>
+                    <div style={{width:8}}/>
+                    <div style={{width:130,fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>PLATFORM</div>
+                    <div style={{flex:1}}/>
+                    <div style={{width:42,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>SHARE</div>
+                    <div style={{width:70,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>REVENUE</div>
+                    <div style={{width:80,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.25)',letterSpacing:2,fontWeight:600}}>STREAMS</div>
                   </div>
                 </Card>
                 {/* Countries + Monthly side by side */}

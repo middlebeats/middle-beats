@@ -21,26 +21,46 @@ export default function AdminDashboardClient() {
         { count: artistCount },
         { count: recordCount },
         { count: uploadCount },
-        { data: revData },
         { data: recentUploads },
-        { data: artistRevData },
       ] = await Promise.all([
         supabase.from('artists').select('*', { count: 'exact', head: true }),
         supabase.from('royalty_records').select('*', { count: 'exact', head: true }),
         supabase.from('report_uploads').select('*', { count: 'exact', head: true }),
-        supabase.from('royalty_records').select('revenue'),
         supabase.from('report_uploads').select('id, filename, source, row_count, uploaded_at').order('uploaded_at', { ascending: false }).limit(5),
-        supabase.from('royalty_records').select('artist_id, revenue, artists(name)'),
       ])
 
-      const totalRevenue = (revData || []).reduce((s: number, r: any) => s + Number(r.revenue), 0)
+      // Fetch revenue in pages to get accurate total
+      let totalRevenue = 0
+      let page = 0
+      const pageSize = 1000
+      while (true) {
+        const { data: chunk } = await supabase
+          .from('royalty_records')
+          .select('revenue')
+          .range(page * pageSize, (page + 1) * pageSize - 1)
+        if (!chunk || chunk.length === 0) break
+        totalRevenue += chunk.reduce((s: number, r: any) => s + Number(r.revenue || 0), 0)
+        if (chunk.length < pageSize) break
+        page++
+      }
 
+      // Get top artists revenue in pages
       const artistRevMap: Record<string, { name: string; revenue: number }> = {}
-      for (const r of (artistRevData || [])) {
-        const a = r.artists as any
-        if (!a) continue
-        if (!artistRevMap[r.artist_id]) artistRevMap[r.artist_id] = { name: a.name, revenue: 0 }
-        artistRevMap[r.artist_id].revenue += Number(r.revenue)
+      page = 0
+      while (true) {
+        const { data: chunk } = await supabase
+          .from('royalty_records')
+          .select('artist_id, revenue, artists(name)')
+          .range(page * pageSize, (page + 1) * pageSize - 1)
+        if (!chunk || chunk.length === 0) break
+        for (const r of chunk) {
+          const a = r.artists as any
+          if (!a) continue
+          if (!artistRevMap[r.artist_id]) artistRevMap[r.artist_id] = { name: a.name, revenue: 0 }
+          artistRevMap[r.artist_id].revenue += Number(r.revenue || 0)
+        }
+        if (chunk.length < pageSize) break
+        page++
       }
       const topArtists = Object.values(artistRevMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
 

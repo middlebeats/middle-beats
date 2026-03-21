@@ -174,11 +174,12 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             </div>
 
             {/* KPIs */}
-            <div className="kg" style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10,marginBottom:18}}>
+            <div className="kg" style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:18}}>
               {[
                 {label:'Revenue',value:'$'+totalRev.toFixed(2),sub:'USD',color:'#93c5fd'},
                 {label:'Streams',value:totalStr.toLocaleString(),sub:'All platforms',color:'#c4b5fd'},
-                {label:'Stores',value:nPlat,sub:nCoun+' countries',color:'#6ee7b7'},
+                {label:'Stores',value:nPlat,sub:'Platforms',color:'#6ee7b7'},
+                {label:'Countries',value:nCoun,sub:'Territories',color:'#f9a8d4'},
                 {label:'Months',value:nMon,sub:'Periods',color:'#fde68a'},
                 {label:'Avg/Month',value:'$'+(nMon>0?(totalRev/nMon).toFixed(2):'0.00'),sub:'Monthly avg',color:'#93c5fd'},
               ].map(k=>(

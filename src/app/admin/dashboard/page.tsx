@@ -8,65 +8,77 @@ export default function AdminDashboardClient() {
   const [userEmail, setUserEmail] = useState('')
 
   async function load() {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/auth/login'; return }
+    setLoading(true)
+    const supabase = createClient()
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { window.location.href = '/auth/login'; return }
 
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-      if (profile?.role !== 'admin') { window.location.href = '/artist/dashboard'; return }
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+    if (profile?.role !== 'admin') { window.location.href = '/artist/dashboard'; return }
 
-      setUserEmail(session.user.email || '')
+    setUserEmail(session.user.email || '')
 
-      const [
-        { count: artistCount },
-        { count: recordCount },
-        { count: uploadCount },
-        { data: recentUploads },
-      ] = await Promise.all([
-        supabase.from('artists').select('*', { count: 'exact', head: true }),
-        supabase.from('royalty_records').select('*', { count: 'exact', head: true }),
-        supabase.from('report_uploads').select('*', { count: 'exact', head: true }),
-        supabase.from('report_uploads').select('id, filename, source, row_count, uploaded_at').order('uploaded_at', { ascending: false }).limit(5),
-      ])
+    // Fast parallel queries — no full table scans
+    const [
+      { count: artistCount },
+      { count: recordCount },
+      { count: uploadCount },
+      { data: recentUploads },
+      { data: topArtistData },
+    ] = await Promise.all([
+      supabase.from('artists').select('*', { count: 'exact', head: true }),
+      supabase.from('royalty_records').select('*', { count: 'exact', head: true }),
+      supabase.from('report_uploads').select('*', { count: 'exact', head: true }),
+      supabase.from('report_uploads').select('id, filename, source, row_count, uploaded_at').order('uploaded_at', { ascending: false }).limit(5),
+      supabase.from('artists').select('id, name').eq('is_active', true).limit(50),
+    ])
 
-      // Fetch revenue in pages to get accurate total
-      let totalRevenue = 0
-      let page = 0
-      const pageSize = 1000
-      while (true) {
-        const { data: chunk } = await supabase
+    // Get revenue per artist using individual queries (fast with index)
+    const artistRevMap: Record<string, { name: string; revenue: number }> = {}
+    let totalRevenue = 0
+
+    if (topArtistData && topArtistData.length > 0) {
+      await Promise.all(topArtistData.map(async (artist) => {
+        const { data: revRows } = await supabase
           .from('royalty_records')
           .select('revenue')
-          .range(page * pageSize, (page + 1) * pageSize - 1)
-        if (!chunk || chunk.length === 0) break
-        totalRevenue += chunk.reduce((s: number, r: any) => s + Number(r.revenue || 0), 0)
-        if (chunk.length < pageSize) break
-        page++
-      }
-
-      // Get top artists revenue in pages
-      const artistRevMap: Record<string, { name: string; revenue: number }> = {}
-      page = 0
-      while (true) {
-        const { data: chunk } = await supabase
-          .from('royalty_records')
-          .select('artist_id, revenue, artists(name)')
-          .range(page * pageSize, (page + 1) * pageSize - 1)
-        if (!chunk || chunk.length === 0) break
-        for (const r of chunk) {
-          const a = r.artists as any
-          if (!a) continue
-          if (!artistRevMap[r.artist_id]) artistRevMap[r.artist_id] = { name: a.name, revenue: 0 }
-          artistRevMap[r.artist_id].revenue += Number(r.revenue || 0)
+          .eq('artist_id', artist.id)
+          .limit(100000)
+        
+        if (revRows) {
+          const artistRev = revRows.reduce((s: number, r: any) => s + Number(r.revenue || 0), 0)
+          if (artistRev > 0) {
+            artistRevMap[artist.id] = { name: artist.name, revenue: artistRev }
+            totalRevenue += artistRev
+          }
         }
-        if (chunk.length < pageSize) break
-        page++
-      }
-      const topArtists = Object.values(artistRevMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
-
-      setData({ artistCount, recordCount, uploadCount, totalRevenue, recentUploads, topArtists })
-      setLoading(false)
+      }))
     }
+
+    // Also get revenue from inactive artists
+    const { data: inactiveArtists } = await supabase.from('artists').select('id, name').eq('is_active', false).limit(100)
+    if (inactiveArtists) {
+      await Promise.all(inactiveArtists.map(async (artist) => {
+        const { data: revRows } = await supabase
+          .from('royalty_records')
+          .select('revenue')
+          .eq('artist_id', artist.id)
+          .limit(100000)
+        if (revRows) {
+          const artistRev = revRows.reduce((s: number, r: any) => s + Number(r.revenue || 0), 0)
+          if (artistRev > 0) {
+            artistRevMap[artist.id] = { name: artist.name, revenue: artistRev }
+            totalRevenue += artistRev
+          }
+        }
+      }))
+    }
+
+    const topArtists = Object.values(artistRevMap).sort((a, b) => b.revenue - a.revenue).slice(0, 5)
+
+    setData({ artistCount, recordCount, uploadCount, totalRevenue, recentUploads, topArtists })
+    setLoading(false)
+  }
 
   useEffect(() => { load() }, [])
 
@@ -77,7 +89,10 @@ export default function AdminDashboardClient() {
 
   if (loading) return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#040e2b' }}>
-      <div style={{ color:'rgba(125,163,252,0.6)', fontFamily:'monospace', fontSize:12, letterSpacing:3 }}>LOADING DASHBOARD...</div>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ color:'rgba(125,163,252,0.6)', fontFamily:'monospace', fontSize:12, letterSpacing:3, marginBottom:12 }}>LOADING DASHBOARD...</div>
+        <div style={{ color:'rgba(125,163,252,0.3)', fontFamily:'monospace', fontSize:10 }}>Calculating revenue across all artists</div>
+      </div>
     </div>
   )
 
@@ -91,7 +106,6 @@ export default function AdminDashboardClient() {
   const s = {
     page: { minHeight:'100vh', background:'#040e2b', backgroundImage:'radial-gradient(ellipse 80% 50% at 80% -10%,rgba(18,68,204,0.35) 0%,transparent 60%)' } as React.CSSProperties,
     header: { display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 32px', height:64, borderBottom:'1px solid rgba(59,130,246,0.15)', background:'rgba(4,14,43,0.95)', position:'sticky', top:0, zIndex:100 } as React.CSSProperties,
-    sidebar: { width:220, borderRight:'1px solid rgba(59,130,246,0.1)', padding:'24px 0', background:'rgba(4,14,43,0.5)', flexShrink:0 } as React.CSSProperties,
     card: { background:'rgba(7,21,53,1)', border:'1px solid rgba(59,130,246,0.15)', borderRadius:16, overflow:'hidden' } as React.CSSProperties,
   }
 
@@ -116,22 +130,21 @@ export default function AdminDashboardClient() {
       </header>
 
       <div style={{ display:'flex', minHeight:'calc(100vh - 64px)' }}>
-        <aside style={s.sidebar}>
+        <aside style={{ width:220, borderRight:'1px solid rgba(59,130,246,0.1)', padding:'24px 0', background:'rgba(4,14,43,0.5)', flexShrink:0 }}>
           {nav.map(item => (
             <a key={item.href} href={item.href} style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 24px', fontSize:13, fontWeight:500, color: item.active ? '#fff' : 'rgba(200,216,248,0.45)', textDecoration:'none', borderLeft: item.active ? '2px solid #3b82f6' : '2px solid transparent', background: item.active ? 'rgba(59,130,246,0.1)' : 'transparent' }}>
-              <span style={{ fontSize:15 }}>{item.icon}</span>{item.label}
+              <span>{item.icon}</span>{item.label}
             </a>
           ))}
-          <div style={{ padding:'20px 24px', borderTop:'1px solid rgba(59,130,246,0.08)', marginTop:'auto', fontFamily:'monospace', fontSize:10, color:'rgba(90,122,184,0.4)' }}>MIDDLE BEATS ADMIN</div>
         </aside>
 
         <main style={{ flex:1, padding:'32px 36px', overflowY:'auto' as const }}>
-          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap', gap:12 }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap' as const, gap:12 }}>
             <div>
               <h1 style={{ fontSize:24, fontWeight:800, color:'#fff', margin:0 }}>Admin Dashboard</h1>
               <p style={{ fontFamily:'monospace', fontSize:11, color:'rgba(125,163,252,0.4)', marginTop:4, letterSpacing:1 }}>Full platform overview · MIDDLE BEATS</p>
             </div>
-            <button onClick={()=>{setLoading(true);load()}} style={{ background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.3)', borderRadius:10, padding:'8px 18px', color:'#7eb8ff', fontFamily:'monospace', fontSize:11, letterSpacing:2, cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>↻ REFRESH</button>
+            <button onClick={()=>load()} style={{ background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.3)', borderRadius:10, padding:'8px 18px', color:'#7eb8ff', fontFamily:'monospace', fontSize:11, letterSpacing:2, cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>↻ REFRESH</button>
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:14, marginBottom:28 }}>

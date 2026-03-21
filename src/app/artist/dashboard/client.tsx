@@ -251,17 +251,32 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                 <div className="tc" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
                   <Card>
                     <Head title="Top Countries"/>
-                    <div style={{padding:12}}>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={byCountry.slice(0,10)} layout="vertical" margin={{left:0,right:16}}>
-                          <XAxis type="number" tick={{fill:'rgba(255,255,255,0.35)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/>
-                          <YAxis type="category" dataKey="name" tick={{fill:'#ffffff',fontSize:10,fontFamily:'Inter',fontWeight:500}} axisLine={false} tickLine={false} width={28}/>
-                          <Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/>
-                          <Bar dataKey="rev" radius={[0,4,4,0]}>
-                            {byCountry.slice(0,10).map((_,i)=><Cell key={i} fill={PAL[i%PAL.length]}/>)}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                    <div style={{padding:'4px 0'}}>
+                      {byCountry.slice(0,8).map((c,i)=>{
+                        const max=byCountry[0]?.rev||1
+                        const pct=Math.round((c.rev/max)*100)
+                        const share=totalRev>0?((c.rev/totalRev)*100).toFixed(1):'0'
+                        return(
+                          <div key={c.name} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 16px',borderBottom:'1px solid rgba(99,130,255,0.07)'}}>
+                            <div style={{width:16,textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.22)',flexShrink:0}}>{i+1}</div>
+                            <div style={{width:7,height:7,borderRadius:'50%',background:PAL[i%PAL.length],flexShrink:0}}/>
+                            <div style={{width:36,fontSize:12,fontWeight:600,color:'#fff',flexShrink:0}}>{c.name}</div>
+                            <div style={{flex:1,height:5,background:'rgba(99,130,255,0.1)',borderRadius:3,overflow:'hidden'}}>
+                              <div style={{height:'100%',borderRadius:3,background:PAL[i%PAL.length],width:pct+'%'}}/>
+                            </div>
+                            <div style={{width:36,textAlign:'right',fontSize:10,color:'rgba(255,255,255,0.35)',flexShrink:0}}>{share}%</div>
+                            <div style={{width:60,textAlign:'right',fontSize:11,color:PAL[i%PAL.length],flexShrink:0,fontWeight:600}}>${c.rev.toFixed(4)}</div>
+                          </div>
+                        )
+                      })}
+                      {!byCountry.length&&<div style={{padding:24,textAlign:'center',fontSize:12,color:'rgba(255,255,255,0.25)'}}>No data</div>}
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:10,padding:'6px 16px',borderTop:'1px solid rgba(99,130,255,0.1)',background:'rgba(99,130,255,0.03)'}}>
+                      <div style={{width:16}}/><div style={{width:7}}/>
+                      <div style={{width:36,fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>CC</div>
+                      <div style={{flex:1}}/>
+                      <div style={{width:36,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>SHARE</div>
+                      <div style={{width:60,textAlign:'right',fontSize:9,color:'rgba(255,255,255,0.22)',letterSpacing:2,fontWeight:600}}>REV</div>
                     </div>
                   </Card>
                   <Card>

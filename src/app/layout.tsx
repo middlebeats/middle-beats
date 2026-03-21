@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Syne, Space_Mono } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 const syne = Syne({ subsets: ['latin'], variable: '--font-syne', weight: ['400','500','600','700','800'] })
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             error: { iconTheme: { primary: '#ff5566', secondary: '#071535' } },
           }}
         />
+        <Analytics />
       </body>
     </html>
   )

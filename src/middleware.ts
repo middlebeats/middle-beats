@@ -24,37 +24,26 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
-  // Not logged in → redirect to login
   if (!user && (path.startsWith('/admin') || path.startsWith('/artist'))) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
   }
 
-  // Logged in → check role for route protection
+  if (user && path.startsWith('/auth')) {
+    const { data: profile } = await supabase
+      .from('profiles').select('role').eq('id', user.id).single()
+    const dest = profile?.role === 'admin' ? '/admin' : '/artist/dashboard'
+    return NextResponse.redirect(new URL(dest, request.url))
+  }
+
   if (user && (path.startsWith('/admin') || path.startsWith('/artist'))) {
     const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
+      .from('profiles').select('role').eq('id', user.id).single()
     if (path.startsWith('/admin') && profile?.role !== 'admin') {
       return NextResponse.redirect(new URL('/artist/dashboard', request.url))
     }
-    if (path.startsWith('/artist') && profile?.role !== 'artist') {
+    if (path.startsWith('/artist') && profile?.role === 'admin') {
       return NextResponse.redirect(new URL('/admin', request.url))
     }
-  }
-
-  // Already logged in → redirect away from auth pages
-  if (user && path.startsWith('/auth')) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    const dest = profile?.role === 'admin' ? '/admin' : '/artist/dashboard'
-    return NextResponse.redirect(new URL(dest, request.url))
   }
 
   return supabaseResponse

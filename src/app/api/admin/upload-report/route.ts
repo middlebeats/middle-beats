@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
           .from('artists')
           .insert({
             name: artistName,
-            email: `${artistName.toLowerCase().replace(/[\s]/g, '.')}@placeholder.middlebeats`,
+            email: `${artistName.toLowerCase().replace(/[\s]/g, '.')}@middle-beats.com`,
             is_active: false,
           })
           .select('id, name')

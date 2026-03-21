@@ -7,8 +7,7 @@ export default function AdminDashboardClient() {
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState('')
 
-  useEffect(() => {
-    async function load() {
+  async function load() {
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { window.location.href = '/auth/login'; return }
@@ -48,8 +47,8 @@ export default function AdminDashboardClient() {
       setData({ artistCount, recordCount, uploadCount, totalRevenue, recentUploads, topArtists })
       setLoading(false)
     }
-    load()
-  }, [])
+
+  useEffect(() => { load() }, [])
 
   async function logout() {
     await createClient().auth.signOut()
@@ -107,9 +106,12 @@ export default function AdminDashboardClient() {
         </aside>
 
         <main style={{ flex:1, padding:'32px 36px', overflowY:'auto' as const }}>
-          <div style={{ marginBottom:28 }}>
-            <h1 style={{ fontSize:24, fontWeight:800, color:'#fff', margin:0 }}>Admin Dashboard</h1>
-            <p style={{ fontFamily:'monospace', fontSize:11, color:'rgba(125,163,252,0.4)', marginTop:4, letterSpacing:1 }}>Full platform overview · MIDDLE BEATS</p>
+          <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap', gap:12 }}>
+            <div>
+              <h1 style={{ fontSize:24, fontWeight:800, color:'#fff', margin:0 }}>Admin Dashboard</h1>
+              <p style={{ fontFamily:'monospace', fontSize:11, color:'rgba(125,163,252,0.4)', marginTop:4, letterSpacing:1 }}>Full platform overview · MIDDLE BEATS</p>
+            </div>
+            <button onClick={()=>{setLoading(true);load()}} style={{ background:'rgba(59,130,246,0.12)', border:'1px solid rgba(59,130,246,0.3)', borderRadius:10, padding:'8px 18px', color:'#7eb8ff', fontFamily:'monospace', fontSize:11, letterSpacing:2, cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>↻ REFRESH</button>
           </div>
 
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:14, marginBottom:28 }}>

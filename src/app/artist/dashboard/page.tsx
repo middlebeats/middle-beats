@@ -19,8 +19,9 @@ export default function ArtistDashboardPage() {
       const { data: artist } = await supabase.from('artists').select('*').eq('user_id', session.user.id).single()
       if (!artist) { window.location.href = '/auth/login'; return }
 
+      // Force fresh data
       const [{ data: records }, { data: notifications }, { data: latestStatement }] = await Promise.all([
-        supabase.from('royalty_records').select('period,year,platform,country,streams,revenue,track_title,release_title,source').eq('artist_id', artist.id),
+        supabase.from('royalty_records').select('period,year,platform,country,streams,revenue,track_title,release_title,source').eq('artist_id', artist.id).order('period', { ascending: false }),
         supabase.from('notifications').select('*').eq('artist_id', artist.id).order('created_at', { ascending: false }).limit(5),
         supabase.from('royalty_statements').select('*').eq('artist_id', artist.id).order('created_at', { ascending: false }).limit(1).single().then(r => r),
       ])

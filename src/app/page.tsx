@@ -116,12 +116,13 @@ export default function HomePage() {
           }}>Artist Analytics & Royalty Platform</div>
         </div>
 
-        {/* Social links - bottom left */}
+        {/* Social links + copyright - bottom center */}
         <div style={{
-          position:'fixed', bottom:32, left:32,
-          display:'flex', flexDirection:'column', gap:10,
+          position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)',
+          display:'flex', flexDirection:'column', alignItems:'center', gap:14,
           zIndex:10,
         }}>
+        <div style={{display:'flex',flexDirection:'row',gap:12}}>
           {/* Instagram */}
           <a href="https://www.instagram.com/middlebeatslb" target="_blank" rel="noopener noreferrer" className="social-btn" title="Instagram">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -144,13 +145,9 @@ export default function HomePage() {
             </svg>
           </a>
         </div>
+          <div style={{fontFamily:"'Inter',sans-serif",fontSize:10,color:'rgba(255,255,255,0.2)',letterSpacing:1,fontWeight:300,whiteSpace:'nowrap'}}>© {new Date().getFullYear()} MIDDLE BEATS</div>
+        </div>
 
-        {/* Copyright bottom right */}
-        <div style={{
-          position:'fixed', bottom:32, right:32,
-          fontFamily:'Inter,sans-serif', fontSize:10,
-          color:'rgba(255,255,255,0.15)', letterSpacing:1, zIndex:10,
-        }}>© {new Date().getFullYear()} MIDDLE BEATS</div>
       </div>
     </>
   )

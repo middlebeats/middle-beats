@@ -98,17 +98,22 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
         ::-webkit-scrollbar-thumb{background:rgba(99,130,255,0.3);border-radius:2px}
         .nb{transition:all 0.15s}.nb:hover{background:rgba(99,130,255,0.1)!important;color:#fff!important}
         .yb{transition:all 0.15s}.yb:hover{border-color:rgba(99,130,255,0.5)!important;color:#fff!important}
+        .hide-mobile{display:inline!important}.show-mobile{display:none!important}
         @media(max-width:768px){
           .sb{display:none!important}
           .sb.open{display:flex!important;position:fixed;top:0;left:0;width:220px;height:100vh;z-index:200;overflow-y:auto}
-          .mc{padding:14px!important}
+          .mc{padding:12px!important}
           .kg{grid-template-columns:1fr 1fr!important}
           .tc{grid-template-columns:1fr!important}
           .mmb{display:block!important}
+          .hide-mobile{display:none!important}
+          .show-mobile{display:block!important}
+          .artist-badge{display:none!important}
         }
         @media(max-width:480px){
           .kg{grid-template-columns:1fr 1fr!important}
-          .kv{font-size:18px!important}
+          .kv{font-size:20px!important}
+          .mc{padding:10px!important}
         }
       `}</style>
 
@@ -119,10 +124,10 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
           <div style={{display:'flex',alignItems:'center',gap:10}}>
             <button className="mmb" onClick={()=>setMenuOpen(!menuOpen)} style={{display:'none',background:'none',border:'none',color:'rgba(255,255,255,0.6)',fontSize:18,cursor:'pointer',padding:'0 8px 0 0'}}>☰</button>
             <img src={LOGO_SRC} alt="MIDDLE BEATS" style={{height:20,display:'block'}}/>
-            <span style={{fontSize:8,background:'rgba(99,130,255,0.12)',color:'rgba(147,197,253,0.9)',padding:'2px 7px',borderRadius:3,letterSpacing:3,border:'1px solid rgba(99,130,255,0.18)',fontWeight:600}}>ARTIST</span>
+            <span className="artist-badge" style={{fontSize:8,background:'rgba(99,130,255,0.12)',color:'rgba(147,197,253,0.9)',padding:'2px 7px',borderRadius:3,letterSpacing:3,border:'1px solid rgba(99,130,255,0.18)',fontWeight:600}}>ARTIST</span>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:8}}>
-            <span style={{fontSize:12,color:'rgba(255,255,255,0.4)',fontWeight:400}}>{artist.name}</span>
+            <span className="hide-mobile" style={{fontSize:12,color:'rgba(255,255,255,0.4)',fontWeight:400}}>{artist.name}</span>
             <button onClick={logout} style={{background:'transparent',border:'1px solid rgba(99,130,255,0.2)',borderRadius:6,padding:'4px 12px',color:'rgba(255,255,255,0.4)',fontSize:10,cursor:'pointer',letterSpacing:1,fontWeight:500,fontFamily:'Inter,sans-serif'}}>SIGN OUT</button>
           </div>
         </header>
@@ -153,7 +158,8 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
           <main className="mc" style={{flex:1,padding:'22px',overflowY:'auto',minWidth:0}}>
             <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:18,flexWrap:'wrap' as const,gap:10}}>
               <div>
-                <h1 style={{fontSize:19,fontWeight:700,color:'#ffffff',margin:0,letterSpacing:-0.3}}>{TABS.find(t=>t.id===tab)?.label}</h1>
+                <div className="show-mobile" style={{fontSize:11,color:'rgba(255,255,255,0.45)',marginBottom:4,fontWeight:500,letterSpacing:0.5}}>{artist.name}</div>
+              <h1 style={{fontSize:19,fontWeight:700,color:'#ffffff',margin:0,letterSpacing:-0.3}}>{TABS.find(t=>t.id===tab)?.label}</h1>
                 
               </div>
               <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap' as const}}>

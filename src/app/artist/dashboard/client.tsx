@@ -203,11 +203,54 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             {/* OVERVIEW */}
             {tab==='overview'&&(
               <div>
+                {/* Platform - full width horizontal bar chart */}
+                <Card style={{marginBottom:12}}>
+                  <Head title="Revenue by Platform"/>
+                  <div style={{padding:'12px 16px'}}>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={byPlatform.slice(0,10)} layout="vertical" margin={{left:8,right:20}}>
+                        <XAxis type="number" tick={{fill:'rgba(255,255,255,0.4)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false} tickFormatter={(v)=>'$'+v.toFixed(3)}/>
+                        <YAxis type="category" dataKey="name" tick={{fill:'#ffffff',fontSize:11,fontFamily:'Inter',fontWeight:500}} axisLine={false} tickLine={false} width={120}/>
+                        <Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(6),'Revenue']}/>
+                        <Bar dataKey="rev" radius={[0,6,6,0]} label={{position:'right',fill:'rgba(255,255,255,0.5)',fontSize:9,fontFamily:'Inter',formatter:(v:number)=>'$'+v.toFixed(4)}}>
+                          {byPlatform.slice(0,10).map((_,i)=><Cell key={i} fill={PAL[i%PAL.length]}/>)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </Card>
+                {/* Countries + Monthly side by side */}
                 <div className="tc" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
-                  <Card><Head title="Revenue by Platform"/><div style={{padding:12}}><ResponsiveContainer width="100%" height={180}><PieChart><Pie data={byPlatform.slice(0,8)} dataKey="rev" nameKey="name" cx="50%" cy="50%" outerRadius={65} paddingAngle={3}>{byPlatform.slice(0,8).map((_,i)=><Cell key={i} fill={PAL[i%PAL.length]}/>)}</Pie><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/><Legend iconType="circle" iconSize={7} wrapperStyle={{fontFamily:'Inter',fontSize:10,color:'rgba(200,220,255,0.65)'}}/></PieChart></ResponsiveContainer></div></Card>
-                  <Card><Head title="Top Countries"/><div style={{padding:12}}><ResponsiveContainer width="100%" height={180}><BarChart data={byCountry.slice(0,8)} layout="vertical" margin={{left:0,right:6}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.65)',fontSize:10,fontFamily:'Inter'}} axisLine={false} tickLine={false} width={26}/><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/><Bar dataKey="rev" fill="#34d399" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
+                  <Card>
+                    <Head title="Top Countries"/>
+                    <div style={{padding:12}}>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={byCountry.slice(0,10)} layout="vertical" margin={{left:0,right:16}}>
+                          <XAxis type="number" tick={{fill:'rgba(255,255,255,0.35)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/>
+                          <YAxis type="category" dataKey="name" tick={{fill:'#ffffff',fontSize:10,fontFamily:'Inter',fontWeight:500}} axisLine={false} tickLine={false} width={28}/>
+                          <Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/>
+                          <Bar dataKey="rev" radius={[0,4,4,0]}>
+                            {byCountry.slice(0,10).map((_,i)=><Cell key={i} fill={PAL[i%PAL.length]}/>)}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
+                  <Card>
+                    <Head title="Monthly Revenue"/>
+                    <div style={{padding:12}}>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <AreaChart data={byMonth}>
+                          <defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#60a5fa" stopOpacity={0.35}/><stop offset="95%" stopColor="#60a5fa" stopOpacity={0}/></linearGradient></defs>
+                          <XAxis dataKey="period" tick={{fill:'rgba(255,255,255,0.35)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:'rgba(255,255,255,0.35)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/>
+                          <Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/>
+                          <Area type="monotone" dataKey="revenue" stroke="#60a5fa" fill="url(#rg)" strokeWidth={2} dot={{fill:'#60a5fa',r:3}}/>
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </Card>
                 </div>
-                <Card><Head title="Monthly Revenue"/><div style={{padding:12}}><ResponsiveContainer width="100%" height={160}><AreaChart data={byMonth}><defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/><stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/></linearGradient></defs><XAxis dataKey="period" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/><YAxis tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:'Inter'}} axisLine={false} tickLine={false}/><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/><Area type="monotone" dataKey="revenue" stroke="#60a5fa" fill="url(#rg)" strokeWidth={2} dot={{fill:'#60a5fa',r:3}}/></AreaChart></ResponsiveContainer></div></Card>
               </div>
             )}
 

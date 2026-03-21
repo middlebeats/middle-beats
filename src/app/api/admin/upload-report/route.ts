@@ -23,52 +23,44 @@ export async function POST(request: NextRequest) {
 
     const csvText = await file.text()
     const { records, source, rowCount } = parseCSV(csvText)
-    
-    if (!rowCount) return NextResponse.json({ error: `No valid records found. Source detected: unknown. Check CSV format.` }, { status: 400 })
+    if (!rowCount) return NextResponse.json({ error: 'No valid records found. Check CSV format.' }, { status: 400 })
 
     // Load all existing artists
     const { data: existingArtists } = await adminSupabase.from('artists').select('id, name, name_ar')
-    
-    // Build a flexible match map
+
+    // Build EXACT match map only — no fuzzy matching
     const artistMap = new Map<string, string>()
     for (const a of (existingArtists || [])) {
       artistMap.set(a.name.toLowerCase().trim(), a.id)
-      if (a.name_ar) artistMap.set(a.name_ar.trim(), a.id)
-      // Also map without spaces/special chars for fuzzy match
-      artistMap.set(a.name.toLowerCase().replace(/[\s\-_]/g, ''), a.id)
+      if (a.name_ar) artistMap.set(a.name_ar.toLowerCase().trim(), a.id)
     }
 
-    // Track unmatched artists to auto-create them
-    const unmatchedNames = new Set<string>()
+    // Find ALL unique artist names in this CSV
+    const csvArtistNames = new Set<string>()
     for (const rec of records) {
-      const name = rec.artist_name.toLowerCase().trim()
-      if (!name) continue
-      const noSpace = name.replace(/[\s\-_]/g, '')
-      
-      let found = artistMap.has(name) || artistMap.has(noSpace)
-      if (!found) {
-        // Try partial match
-        for (const [key] of artistMap) {
-          if (key.includes(name) || name.includes(key)) { found = true; break }
-        }
-      }
-      if (!found) unmatchedNames.add(rec.artist_name.trim())
+      if (rec.artist_name.trim()) csvArtistNames.add(rec.artist_name.trim())
     }
 
-    // Auto-create unmatched artists (without user accounts - data-only artists)
+    // Auto-create only artists that have NO exact match
     const newArtists: string[] = []
-    for (const artistName of unmatchedNames) {
-      if (!artistName) continue
-      const { data: newArtist, error } = await adminSupabase
-        .from('artists')
-        .insert({ name: artistName, email: `${artistName.toLowerCase().replace(/\s+/g,'.')}@middle-beats.com`, is_active: false })
-        .select('id, name')
-        .single()
-      
-      if (newArtist && !error) {
-        artistMap.set(artistName.toLowerCase().trim(), newArtist.id)
-        artistMap.set(artistName.toLowerCase().replace(/[\s\-_]/g, ''), newArtist.id)
-        newArtists.push(artistName)
+    for (const artistName of csvArtistNames) {
+      const key = artistName.toLowerCase().trim()
+      if (!artistMap.has(key)) {
+        // Create new artist record (inactive, no login)
+        const { data: newArtist, error } = await adminSupabase
+          .from('artists')
+          .insert({
+            name: artistName,
+            email: `${artistName.toLowerCase().replace(/[\s]/g, '.')}@placeholder.middlebeats`,
+            is_active: false,
+          })
+          .select('id, name')
+          .single()
+
+        if (newArtist && !error) {
+          artistMap.set(key, newArtist.id)
+          newArtists.push(artistName)
+        }
       }
     }
 
@@ -78,23 +70,18 @@ export async function POST(request: NextRequest) {
       .insert({ filename: file.name, source, row_count: rowCount, uploaded_by: user.id })
       .select().single()
 
-    // Now insert all records
+    // Build insert array — EXACT match only
     const toInsert = []
-    const stillUnmatched = new Set<string>()
+    const unmatched = new Set<string>()
 
     for (const rec of records) {
-      const name = rec.artist_name.toLowerCase().trim()
-      const noSpace = name.replace(/[\s\-_]/g, '')
-      
-      let artistId = artistMap.get(name) || artistMap.get(noSpace)
-      
+      const key = rec.artist_name.toLowerCase().trim()
+      const artistId = artistMap.get(key)
+
       if (!artistId) {
-        for (const [key, id] of artistMap) {
-          if (key.includes(name) || name.includes(key)) { artistId = id; break }
-        }
+        unmatched.add(rec.artist_name)
+        continue
       }
-      
-      if (!artistId) { stillUnmatched.add(rec.artist_name); continue }
 
       toInsert.push({
         upload_id: upload?.id,
@@ -118,14 +105,14 @@ export async function POST(request: NextRequest) {
     const CHUNK = 500
     for (let i = 0; i < toInsert.length; i += CHUNK) {
       const { error } = await adminSupabase.from('royalty_records').insert(toInsert.slice(i, i + CHUNK))
-      if (error) console.error('Insert error:', error.message)
+      if (error) console.error('Insert error at chunk', i, error.message)
     }
 
-    return NextResponse.json({ 
-      source, 
-      rowCount, 
-      matched: toInsert.length, 
-      unmatched: [...stillUnmatched],
+    return NextResponse.json({
+      source,
+      rowCount,
+      matched: toInsert.length,
+      unmatched: [...unmatched],
       autoCreated: newArtists,
     })
 

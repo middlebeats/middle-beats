@@ -24,6 +24,9 @@ export default function HomePage() {
         .fade2 { animation: fadeUp 0.8s 0.2s ease both; }
         .fade3 { animation: fadeUp 0.8s 0.4s ease both; }
         .fade4 { animation: fadeUp 0.8s 0.6s ease both; }
+        @media(max-width:480px){
+          .portal-btn{padding:14px 32px!important;font-size:13px!important}
+        }
         .portal-btn {
           display: inline-flex; align-items: center; gap: 10px;
           padding: 16px 44px;
@@ -86,7 +89,7 @@ export default function HomePage() {
 
           {/* Logo */}
           <div className="fade1" style={{marginBottom:12}}>
-            <img src={LOGO_SRC} alt="MIDDLE BEATS" style={{height:52,display:'block'}}/>
+            <img src={LOGO_SRC} alt="MIDDLE BEATS" style={{height:'auto',width:'min(320px, 75vw)',display:'block',objectFit:'contain'}}/>
           </div>
 
           {/* Tagline */}

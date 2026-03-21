@@ -111,7 +111,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
 
   return (
     <div style={{minHeight:'100vh',background:'#030c24',backgroundImage:'radial-gradient(ellipse 80% 60% at 75% -5%,rgba(10,40,180,0.45) 0%,transparent 65%)',fontFamily:sans}}>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+
 
       {/* HEADER */}
       <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 28px',height:60,borderBottom:'1px solid rgba(59,130,246,0.12)',background:'rgba(3,12,36,0.97)',position:'sticky',top:0,zIndex:100}}>
@@ -224,7 +224,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                       <BarChart data={byCountry.slice(0,8)} layout="vertical" margin={{left:0,right:8}}>
                         <XAxis type="number" tick={{fill:'rgba(90,122,184,0.6)',fontSize:9,fontFamily:mono}} axisLine={false} tickLine={false}/>
                         <YAxis type="category" dataKey="name" tick={{fill:'rgba(150,190,255,0.7)',fontSize:10,fontFamily:mono}} axisLine={false} tickLine={false} width={28}/>
-                        <Tooltip {...TT} formatter={(v:number)=['$'+v.toFixed(4),'Revenue']}/>
+                        <Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/>
                         <Bar dataKey="rev" fill="rgba(16,185,129,0.8)" radius={[0,4,4,0]}/>
                       </BarChart>
                     </ResponsiveContainer>

@@ -89,4 +89,4 @@ export async function POST(request: NextRequest) {
 }
 
 // Allow large file uploads
-export const config = { api: { bodyParser: false } }
+export const maxDuration = 60

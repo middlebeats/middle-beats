@@ -22,11 +22,13 @@ interface Props {
 function agg(records: any[], key: string) {
   const m: Record<string,{rev:number;plays:number}> = {}
   records.forEach(r => {
-    const k = String(r[key] || '').trim()
+    // For track_title, fall back to release_title if empty
+    let k = String(r[key] || '').trim()
+    if (!k && key === 'track_title') k = String(r['release_title'] || '').trim()
     if (!k) return
     if (!m[k]) m[k] = {rev:0,plays:0}
-    m[k].rev += Number(r.revenue)
-    m[k].plays += r.streams
+    m[k].rev += Number(r.revenue || 0)
+    m[k].plays += Number(r.streams || 0)
   })
   return Object.entries(m).map(([name,v]) => ({name,...v})).sort((a,b) => b.rev-a.rev)
 }
@@ -55,8 +57,28 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
   const nMon        = new Set(filtered.map((r:any)=>r.period).filter(Boolean)).size
 
   const byMonth    = useMemo(()=>{const m:Record<string,{rev:number;plays:number}>={};filtered.forEach((r:any)=>{if(!r.period)return;if(!m[r.period])m[r.period]={rev:0,plays:0};m[r.period].rev+=Number(r.revenue);m[r.period].plays+=r.streams});return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([p,v])=>({period:p,revenue:+v.rev.toFixed(4),streams:v.plays}));},[filtered])
-  const byPlatform = useMemo(()=>agg(filtered as any,'platform'),[filtered])
-  const byCountry  = useMemo(()=>agg(filtered as any,'country'),[filtered])
+  const byPlatform = useMemo(()=>{
+    const m: Record<string,{rev:number;plays:number}> = {}
+    ;(filtered as any[]).forEach((r:any) => {
+      const k = String(r.platform || '').trim()
+      if (!k || k === 'null' || k === 'undefined') return
+      if (!m[k]) m[k] = {rev:0,plays:0}
+      m[k].rev += Number(r.revenue || 0)
+      m[k].plays += Number(r.streams || 0)
+    })
+    return Object.entries(m).map(([name,v]) => ({name,...v})).sort((a,b) => b.rev-a.rev)
+  },[filtered])
+  const byCountry  = useMemo(()=>{
+    const m: Record<string,{rev:number;plays:number}> = {}
+    ;(filtered as any[]).forEach((r:any) => {
+      const k = String(r.country || '').trim().toUpperCase()
+      if (!k || k === 'NULL' || k === 'UNDEFINED' || k.length > 3) return
+      if (!m[k]) m[k] = {rev:0,plays:0}
+      m[k].rev += Number(r.revenue || 0)
+      m[k].plays += Number(r.streams || 0)
+    })
+    return Object.entries(m).map(([name,v]) => ({name,...v})).sort((a,b) => b.rev-a.rev)
+  },[filtered])
   const byTrack    = useMemo(()=>agg(filtered as any,'track_title'),[filtered])
   const byRelease  = useMemo(()=>agg(filtered as any,'release_title'),[filtered])
   const byYear     = useMemo(()=>{const m:Record<string,{rev:number;plays:number}>={};records.forEach((r:any)=>{if(!r.year)return;if(!m[r.year])m[r.year]={rev:0,plays:0};m[r.year].rev+=Number(r.revenue);m[r.year].plays+=r.streams});return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).map(([y,v])=>({year:y,revenue:+v.rev.toFixed(4),streams:v.plays}));},[records])

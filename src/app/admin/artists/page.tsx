@@ -42,12 +42,12 @@ export default function AdminArtistsPage() {
   const mono = "'DM Mono', monospace"
   const sans = "'Syne', sans-serif"
 
-  if (loading) return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#040e2b',color:'rgba(125,163,252,0.5)',fontFamily:mono,fontSize:12,letterSpacing:3}}>LOADING...</div>
+  if (loading) return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#030a1c',color:'rgba(125,163,252,0.5)',fontFamily:mono,fontSize:12,letterSpacing:3}}>LOADING...</div>
 
   return (
-    <div style={{minHeight:'100vh',background:'#040e2b',backgroundImage:'radial-gradient(ellipse 80% 50% at 80% -10%,rgba(18,68,204,0.3) 0%,transparent 60%)',fontFamily:sans}}>
+    <div style={{minHeight:'100vh',background:'#030a1c',backgroundImage:'radial-gradient(ellipse 120% 80% at 70% -20%, #0a2a7a 0%, #030a1c 60%)',fontFamily:sans}}>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-      <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 32px',height:64,borderBottom:'1px solid rgba(59,130,246,0.15)',background:'rgba(4,14,43,0.97)',position:'sticky',top:0,zIndex:100}}>
+      <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 32px',height:64,borderBottom:'1px solid rgba(59,130,246,0.15)',background:'rgba(3,10,28,0.97)',position:'sticky',top:0,zIndex:100}}>
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <a href="/admin/dashboard" style={{textDecoration:'none',display:'flex',alignItems:'center',gap:10}}>
             <span style={{fontSize:18,fontWeight:800,letterSpacing:3,color:'#fff',fontFamily:sans}}>MIDDLE <span style={{color:'#7dd3fc'}}>BEATS</span></span>
@@ -60,7 +60,7 @@ export default function AdminArtistsPage() {
         </div>
       </header>
       <div style={{display:'flex',minHeight:'calc(100vh - 64px)'}}>
-        <aside style={{width:220,borderRight:'1px solid rgba(59,130,246,0.1)',padding:'16px 0',background:'rgba(4,14,43,0.6)',flexShrink:0}}>
+        <aside style={{width:220,borderRight:'1px solid rgba(59,130,246,0.1)',padding:'16px 0',background:'rgba(3,10,28,0.6)',flexShrink:0}}>
           {[{href:'/admin/dashboard',icon:'📊',label:'Dashboard'},{href:'/admin/artists',icon:'🎤',label:'Artists',active:true},{href:'/admin/upload',icon:'📂',label:'Upload Reports'},{href:'/admin/statements',icon:'💸',label:'Statements'}].map(item=>(
             <a key={item.href} href={item.href} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 24px',fontSize:13,fontWeight:item.active?600:400,color:item.active?'#fff':'rgba(200,216,248,0.4)',textDecoration:'none',borderLeft:item.active?'2px solid #3b82f6':'2px solid transparent',background:item.active?'rgba(59,130,246,0.1)':'transparent',fontFamily:sans}}>
               <span>{item.icon}</span>{item.label}
@@ -75,7 +75,7 @@ export default function AdminArtistsPage() {
             </div>
             <a href="/admin/artists/new" style={{padding:'11px 24px',background:'linear-gradient(135deg,#1a55e8,#1244cc)',color:'#fff',borderRadius:10,fontFamily:mono,fontSize:11,letterSpacing:2,fontWeight:700,textDecoration:'none',boxShadow:'0 4px 20px rgba(26,85,232,0.4)'}}>➕ ADD ARTIST</a>
           </div>
-          <div style={{background:'rgba(7,21,53,1)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:16,overflow:'hidden'}}>
+          <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(59,130,246,0.15)',borderRadius:16,overflow:'hidden'}}>
             <div style={{overflowX:'auto'}}>
               <table style={{width:'100%',borderCollapse:'collapse'}}>
                 <thead>

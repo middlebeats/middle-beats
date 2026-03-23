@@ -21,56 +21,45 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
 
-    const csvText = await file.text()
-    const { records, source, rowCount } = parseCSV(csvText)
-    if (!rowCount) return NextResponse.json({ error: 'No valid records found. Check CSV format.' }, { status: 400 })
-
-    // Check for duplicate filename
-    const { data: existing } = await adminSupabase
+    // STEP 1: Check for duplicate filename FIRST before doing anything
+    const { data: existingUploads } = await adminSupabase
       .from('report_uploads')
       .select('id, uploaded_at')
       .eq('filename', file.name)
-      .single()
-    
-    if (existing) {
+      .limit(1)
+
+    if (existingUploads && existingUploads.length > 0) {
       return NextResponse.json({
-        error: \`This file was already uploaded on \${new Date(existing.uploaded_at).toLocaleDateString()}. Each report can only be uploaded once.\`,
+        error: `"${file.name}" was already uploaded on ${new Date(existingUploads[0].uploaded_at).toLocaleDateString()}. Delete the existing upload first if you want to re-upload.`,
         duplicate: true,
       }, { status: 409 })
     }
 
-    // Load all existing artists
-    const { data: existingArtists } = await adminSupabase.from('artists').select('id, name, name_ar')
+    // STEP 2: Parse CSV
+    const csvText = await file.text()
+    const { records, source, rowCount } = parseCSV(csvText)
+    if (!rowCount) return NextResponse.json({ error: 'No valid records found. Check CSV format.' }, { status: 400 })
 
-    // Build EXACT match map only — no fuzzy matching
+    // STEP 3: Load existing artists and build exact match map
+    const { data: existingArtists } = await adminSupabase.from('artists').select('id, name, name_ar')
     const artistMap = new Map<string, string>()
     for (const a of (existingArtists || [])) {
       artistMap.set(a.name.toLowerCase().trim(), a.id)
       if (a.name_ar) artistMap.set(a.name_ar.toLowerCase().trim(), a.id)
     }
 
-    // Find ALL unique artist names in this CSV
-    const csvArtistNames = new Set<string>()
-    for (const rec of records) {
-      if (rec.artist_name.trim()) csvArtistNames.add(rec.artist_name.trim())
-    }
-
-    // Auto-create only artists that have NO exact match
+    // STEP 4: Auto-create missing artists
     const newArtists: string[] = []
+    const csvArtistNames = new Set(records.map(r => r.artist_name.trim()).filter(Boolean))
     for (const artistName of csvArtistNames) {
       const key = artistName.toLowerCase().trim()
       if (!artistMap.has(key)) {
-        // Create new artist record (inactive, no login)
+        const slug = artistName.toLowerCase().replace(/[\s]/g, '.')
         const { data: newArtist, error } = await adminSupabase
           .from('artists')
-          .insert({
-            name: artistName,
-            email: `${artistName.toLowerCase().replace(/[\s]/g, '.')}@middle-beats.com`,
-            is_active: false,
-          })
+          .insert({ name: artistName, email: `${slug}@middle-beats.com`, is_active: false })
           .select('id, name')
           .single()
-
         if (newArtist && !error) {
           artistMap.set(key, newArtist.id)
           newArtists.push(artistName)
@@ -78,39 +67,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Check for duplicate filename
-    const { data: existing } = await adminSupabase
-      .from('report_uploads')
-      .select('id, filename, uploaded_at')
-      .eq('filename', file.name)
-      .single()
-
-    if (existing) {
-      return NextResponse.json({
-        error: \`This file was already uploaded on \${new Date(existing.uploaded_at).toLocaleDateString()}. Duplicate reports are not allowed.\`,
-        duplicate: true,
-        filename: file.name,
-      }, { status: 409 })
-    }
-
-    // Create upload record
+    // STEP 5: Create the upload record
     const { data: upload } = await adminSupabase
       .from('report_uploads')
       .insert({ filename: file.name, source, row_count: rowCount, uploaded_by: user.id })
       .select().single()
 
-    // Build insert array — EXACT match only
-    const toInsert = []
+    // STEP 6: Build insert rows with exact artist matching only
+    const toInsert: any[] = []
     const unmatched = new Set<string>()
 
     for (const rec of records) {
       const key = rec.artist_name.toLowerCase().trim()
       const artistId = artistMap.get(key)
-
-      if (!artistId) {
-        unmatched.add(rec.artist_name)
-        continue
-      }
+      if (!artistId) { unmatched.add(rec.artist_name); continue }
 
       toInsert.push({
         upload_id: upload?.id,
@@ -130,7 +100,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Insert in chunks of 500
+    // STEP 7: Insert in chunks of 500
     const CHUNK = 500
     for (let i = 0; i < toInsert.length; i += CHUNK) {
       const { error } = await adminSupabase.from('royalty_records').insert(toInsert.slice(i, i + CHUNK))

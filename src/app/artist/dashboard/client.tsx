@@ -1,5 +1,6 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { t, Lang } from '@/lib/translations'
 import { Artist, RoyaltyRecord, Notification, RoyaltyStatement } from '@/types'
 import { createClient } from '@/lib/supabase/client'
 import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts'
@@ -33,19 +34,14 @@ function agg(records: any[], key: string) {
   return Object.entries(m).map(([name,v]) => ({name,...v})).sort((a,b) => b.rev-a.rev)
 }
 
-const TABS = [
-  {id:'overview',  label:tr.overview,  icon:'≡'},
-  {id:'platforms', label:tr.platforms, icon:'◉'},
-  {id:'countries', label:tr.countries, icon:'○'},
-  {id:'tracks',    label:tr.tracks,    icon:'∿'},
-  {id:'trends',    label:tr.trends,    icon:'↑'},
-] as const
-type Tab = typeof TABS[number]['id']
+// TABS moved inside component - see below
+type Tab = 'overview'|'platforms'|'countries'|'tracks'|'trends'
 
 export default function ArtistDashboardClient({ artist, records, notifications, latestStatement }: Props) {
   const [yr, setYr] = useState('all')
   const [tab, setTab] = useState<Tab>('overview')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [lang, setLang] = useState<Lang>('en')
 
   const years = useMemo(() => [...new Set(records.map((r:any) => r.year).filter(Boolean))].sort() as string[], [records])
   useEffect(() => {
@@ -54,6 +50,14 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
   }, [])
 
   const tr = t[lang]
+
+  const TABS = [
+    {id:'overview'  as Tab, label:tr.overview,  icon:'≡'},
+    {id:'platforms' as Tab, label:tr.platforms, icon:'◉'},
+    {id:'countries' as Tab, label:tr.countries, icon:'○'},
+    {id:'tracks'    as Tab, label:tr.tracks,    icon:'∿'},
+    {id:'trends'    as Tab, label:tr.trends,    icon:'↑'},
+  ]
 
   const filtered = useMemo(() => yr === 'all' ? records : records.filter((r:any) => r.year === yr), [records, yr])
 

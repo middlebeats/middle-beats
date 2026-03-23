@@ -9,7 +9,7 @@ const sans = "'DM Sans',sans-serif"
 
 interface UploadResult {
   filename: string; source: string; rowCount: number
-  matched: number; unmatched: string[]; autoCreated?: string[]; error?: string
+  matched: number; unmatched: string[]; autoCreated?: string[]; error?: string; duplicate?: boolean
 }
 
 export default function UploadPage() {
@@ -57,7 +57,7 @@ export default function UploadPage() {
           body: formData,
         })
         const data = await res.json()
-        if (!res.ok) newResults.push({ filename:files[i].name, source:'error', rowCount:0, matched:0, unmatched:[], error:data.error||'HTTP '+res.status })
+        if (!res.ok) newResults.push({ filename:files[i].name, source:'error', rowCount:0, matched:0, unmatched:[], error:data.error||'HTTP '+res.status, duplicate:data.duplicate||false })
         else newResults.push({ filename:files[i].name, ...data })
       } catch(e:any) {
         newResults.push({ filename:files[i].name, source:'error', rowCount:0, matched:0, unmatched:[], error:e.message })
@@ -149,11 +149,11 @@ export default function UploadPage() {
             {results.map(r=>(
               <div key={r.filename} style={{ padding:'14px 16px', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                 <div style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom:(r.unmatched?.length||r.error||r.autoCreated?.length)?8:0 }}>
-                  <span style={{ fontSize:15, marginTop:1 }}>{r.error?'❌':r.matched>0?'✅':'⚠️'}</span>
+                  <span style={{ fontSize:15, marginTop:1 }}>{r.error?(r.duplicate?'🔁':'❌'):r.matched>0?'✅':'⚠️'}</span>
                   <div style={{ flex:1 }}>
                     <div style={{ fontFamily:mono, fontSize:11, color:'rgba(255,255,255,0.85)', fontWeight:700 }}>{r.filename}</div>
                     {!r.error && <div style={{ fontFamily:mono, fontSize:10, color:'rgba(255,255,255,0.3)', marginTop:3 }}>{r.rowCount} rows · {r.matched} matched · {r.source}</div>}
-                    {r.error && <div style={{ fontFamily:mono, fontSize:10, color:'#fca5a5', marginTop:3 }}>Error: {r.error}</div>}
+                    {r.error && <div style={{ fontFamily:mono, fontSize:10, color:r.duplicate?'#fde68a':'#fca5a5', marginTop:3 }}>{r.error}</div>}
                   </div>
                   {!r.error && <span style={{ fontFamily:mono, fontSize:8, padding:'2px 7px', borderRadius:4, background:r.source==='anghami'?'rgba(239,68,68,0.1)':'rgba(37,99,235,0.1)', color:r.source==='anghami'?'#fca5a5':'#93c5fd', border:'1px solid '+(r.source==='anghami'?'rgba(239,68,68,0.2)':'rgba(37,99,235,0.2)'), letterSpacing:0.5 }}>{r.source==='anghami'?'ANGHAMI':'PLATFORM'}</span>}
                 </div>

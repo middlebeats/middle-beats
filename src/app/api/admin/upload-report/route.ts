@@ -25,6 +25,20 @@ export async function POST(request: NextRequest) {
     const { records, source, rowCount } = parseCSV(csvText)
     if (!rowCount) return NextResponse.json({ error: 'No valid records found. Check CSV format.' }, { status: 400 })
 
+    // Check for duplicate filename
+    const { data: existing } = await adminSupabase
+      .from('report_uploads')
+      .select('id, uploaded_at')
+      .eq('filename', file.name)
+      .single()
+    
+    if (existing) {
+      return NextResponse.json({
+        error: \`This file was already uploaded on \${new Date(existing.uploaded_at).toLocaleDateString()}. Each report can only be uploaded once.\`,
+        duplicate: true,
+      }, { status: 409 })
+    }
+
     // Load all existing artists
     const { data: existingArtists } = await adminSupabase.from('artists').select('id, name, name_ar')
 
@@ -62,6 +76,21 @@ export async function POST(request: NextRequest) {
           newArtists.push(artistName)
         }
       }
+    }
+
+    // Check for duplicate filename
+    const { data: existing } = await adminSupabase
+      .from('report_uploads')
+      .select('id, filename, uploaded_at')
+      .eq('filename', file.name)
+      .single()
+
+    if (existing) {
+      return NextResponse.json({
+        error: \`This file was already uploaded on \${new Date(existing.uploaded_at).toLocaleDateString()}. Duplicate reports are not allowed.\`,
+        duplicate: true,
+        filename: file.name,
+      }, { status: 409 })
     }
 
     // Create upload record

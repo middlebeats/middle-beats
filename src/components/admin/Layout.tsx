@@ -7,10 +7,10 @@ const mono = "'DM Mono',monospace"
 const sans = "'DM Sans',sans-serif"
 
 const NAV = [
-  { key:'dashboard', label:'Dashboard', href:'/admin/dashboard', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
-  { key:'artists',   label:'Artists',   href:'/admin/artists',   icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
-  { key:'upload',    label:'Upload Reports', href:'/admin/upload', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> },
-  { key:'statements',label:'Statements', href:'/admin/statements', icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> },
+  { key:'dashboard', label:'Dashboard', href:'/admin/dashboard', icon:'⊞' },
+  { key:'artists',   label:'Artists',   href:'/admin/artists',   icon:'♪' },
+  { key:'upload',    label:'Upload Reports', href:'/admin/upload', icon:'↑' },
+  { key:'statements',label:'Statements', href:'/admin/statements', icon:'≡' },
 ]
 
 interface Props { activePage: string; children: React.ReactNode; adminEmail?: string }
@@ -27,8 +27,14 @@ export default function AdminLayout({ activePage, children, adminEmail }: Props)
     <div style={{ minHeight:'100vh', background:'#030a1c', backgroundImage:'radial-gradient(ellipse 120% 80% at 70% -20%, #0a2a7a 0%, #030a1c 60%)', fontFamily:sans }}>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
       <style>{`
+        .anav{transition:all 0.15s}
         .anav:hover{background:rgba(37,99,235,0.08)!important;color:#fff!important}
-        @media(max-width:768px){.asidebar{display:none!important}.asidebar.open{display:flex!important;position:fixed;top:0;left:0;height:100vh;z-index:200;box-shadow:4px 0 32px rgba(0,0,0,0.6)}.ahambtn{display:flex!important}.aemail{display:none!important}}
+        @media(max-width:768px){
+          .asidebar{display:none!important}
+          .asidebar.open{display:flex!important;position:fixed;top:0;left:0;height:100vh;z-index:200;box-shadow:4px 0 32px rgba(0,0,0,0.6)}
+          .ahambtn{display:flex!important}
+          .aemail{display:none!important}
+        }
       `}</style>
 
       <header style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 24px', height:60, borderBottom:'1px solid rgba(255,255,255,0.08)', background:'rgba(3,10,28,0.97)', position:'sticky', top:0, zIndex:100 }}>
@@ -48,13 +54,13 @@ export default function AdminLayout({ activePage, children, adminEmail }: Props)
       {menuOpen && <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', zIndex:150 }} onClick={()=>setMenuOpen(false)}/>}
 
       <div style={{ display:'flex', minHeight:'calc(100vh - 60px)' }}>
-        <aside className={'asidebar'+(menuOpen?' open':'')} style={{ width:220, borderRight:'1px solid rgba(255,255,255,0.07)', padding:'16px 0 0', background:'rgba(3,10,28,0.97)', flexShrink:0, display:'flex', flexDirection:'column' }}>
+        <aside className={'asidebar'+(menuOpen?' open':'')} style={{ width:220, borderRight:'1px solid rgba(255,255,255,0.07)', padding:'16px 0 0', background:'rgba(3,10,28,0.97)', flexShrink:0, display:'flex', flexDirection:'column' as const }}>
           <div style={{ display:'none', padding:'0 20px 14px', marginBottom:6, borderBottom:'1px solid rgba(255,255,255,0.07)' }} className="ahambtn">
             <button onClick={()=>setMenuOpen(false)} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.4)', fontSize:13, cursor:'pointer', fontFamily:mono }}>✕ CLOSE</button>
           </div>
           {NAV.map(item=>(
-            <a key={item.key} href={item.href} className="anav" style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 20px', fontSize:13, color:item.key===activePage?'#fff':'rgba(255,255,255,0.42)', textDecoration:'none', borderLeft:item.key===activePage?'2px solid #2563eb':'2px solid transparent', background:item.key===activePage?'rgba(37,99,235,0.1)':'transparent', fontWeight:item.key===activePage?600:400, transition:'all 0.15s' }}>
-              <span style={{ color:item.key===activePage?'#93c5fd':'rgba(255,255,255,0.35)', flexShrink:0 }}>{item.icon}</span>
+            <a key={item.key} href={item.href} className="anav" style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 20px', fontSize:13, color:item.key===activePage?'#fff':'rgba(255,255,255,0.42)', textDecoration:'none', borderLeft:item.key===activePage?'2px solid #2563eb':'2px solid transparent', background:item.key===activePage?'rgba(37,99,235,0.1)':'transparent', fontWeight:item.key===activePage?600:400 }}>
+              <span style={{ fontFamily:mono, fontSize:16, width:20, textAlign:'center' as const, color:item.key===activePage?'#93c5fd':'rgba(255,255,255,0.3)' }}>{item.icon}</span>
               {item.label}
             </a>
           ))}

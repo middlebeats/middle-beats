@@ -42,6 +42,10 @@ export default function HomePage() {
           box-shadow: 0 0 60px rgba(37,99,235,0.7);
         }
 
+        @media(max-width: 480px) {
+          .portal-btn { padding: 14px 28px !important; font-size: 14px !important; }
+          .badge { font-size: 12px !important; padding: 7px 14px !important; }
+        }
         .social-btn {
           display: flex; align-items: center; justify-content: center;
           width: 44px; height: 44px; border-radius: 10px;
@@ -104,33 +108,35 @@ export default function HomePage() {
           {/* Tagline matching website style */}
           <p className="f3" style={{
             fontFamily: "'DM Sans', sans-serif",
-            fontSize: 'clamp(15px, 2vw, 18px)',
-            color: 'rgba(255,255,255,0.55)',
+            fontSize: 'clamp(13px, 3.5vw, 16px)',
+            color: 'rgba(255,255,255,0.5)',
             fontWeight: 400,
-            marginBottom: 40,
+            marginBottom: 36,
             lineHeight: 1.6,
-            maxWidth: 480,
+            maxWidth: 420,
+            textAlign: 'center',
+            padding: '0 20px',
+            margin: '0 auto 36px',
           }}>
             Access your music analytics, streams, and royalty reports — all in one place.
           </p>
 
           {/* CTA Button */}
-          <div className="f4" style={{ marginBottom: 16 }}>
+          <div className="f4">
             <a href="/auth/login" className="portal-btn">
               Artist Portal →
             </a>
           </div>
 
-          <div className="f4" style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', fontFamily: "'DM Sans', sans-serif" }}>
-            Powered by MIDDLE BEATS Distribution
-          </div>
+
         </div>
 
         {/* Bottom: socials + copyright */}
         <div style={{
-          position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
-          zIndex: 10,
+          position: 'fixed', bottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
+          left: '50%', transform: 'translateX(-50%)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+          zIndex: 10, width: '100%', padding: '0 16px',
         }}>
           <div style={{ display: 'flex', gap: 10 }}>
             <a href="https://www.instagram.com/middlebeatslb" target="_blank" rel="noopener noreferrer" className="social-btn" title="Instagram">
@@ -150,8 +156,8 @@ export default function HomePage() {
               </svg>
             </a>
           </div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'rgba(255,255,255,0.2)', letterSpacing: 0.5 }}>
-            © {new Date().getFullYear()} MIDDLE BEATS · All rights reserved
+          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 'clamp(10px, 2.5vw, 12px)', color: 'rgba(255,255,255,0.2)', letterSpacing: 0.5, textAlign: 'center', whiteSpace: 'nowrap' }}>
+            © {new Date().getFullYear()} MIDDLE BEATS
           </div>
         </div>
       </div>

@@ -11,13 +11,15 @@ export default function ArtistDashboardPage() {
   useEffect(() => {
     async function load() {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/auth/login'; return }
+      
+      // Use getUser() for fresh server-verified auth - prevents stale session issues
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) { window.location.href = '/auth/login'; return }
 
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
+      const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
       if (profile?.role === 'admin') { window.location.href = '/admin/dashboard'; return }
 
-      const { data: artist } = await supabase.from('artists').select('*').eq('user_id', session.user.id).single()
+      const { data: artist } = await supabase.from('artists').select('*').eq('user_id', user.id).single()
       if (!artist) { window.location.href = '/auth/login'; return }
 
       setProgress('Fetching analytics...')

@@ -1,7 +1,8 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AdminLayout from '@/components/admin/Layout'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 const mono = "'DM Mono',monospace"
 const syne = "'Syne',sans-serif"
@@ -16,19 +17,15 @@ const IC = {
 }
 
 export default function AdminDashboard() {
+  const auth = useAdminAuth()
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [adminEmail, setAdminEmail] = useState('')
 
   async function load() {
+    if (!auth.authorized) return
     setRefreshing(true)
     const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { window.location.href = '/auth/login'; return }
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-    if (profile?.role !== 'admin') { window.location.href = '/artist/dashboard'; return }
-    setAdminEmail(session.user.email || '')
 
     const [
       { count: artistCount },
@@ -71,11 +68,11 @@ export default function AdminDashboard() {
     setLoading(false); setRefreshing(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { if (auth.ready) load() }, [auth.ready])
 
   const card: React.CSSProperties = { background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }
 
-  if (loading) return (
+  if (!auth.ready || loading) return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#030a1c' }}>
       <div style={{ textAlign:'center' }}>
         <div style={{ color:'rgba(147,197,253,0.6)', fontFamily:mono, fontSize:11, letterSpacing:3, marginBottom:8 }}>LOADING DASHBOARD</div>
@@ -85,7 +82,7 @@ export default function AdminDashboard() {
   )
 
   return (
-    <AdminLayout activePage="dashboard" adminEmail={adminEmail}>
+    <AdminLayout activePage="dashboard" adminEmail={auth.email}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap' as const, gap:12 }}>
         <div>
           <h1 style={{ fontSize:24, fontWeight:800, color:'#fff', margin:0, fontFamily:syne }}>Admin Dashboard</h1>

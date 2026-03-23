@@ -2,13 +2,13 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AdminLayout from '@/components/admin/Layout'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 const mono = "'DM Mono',monospace"
 const syne = "'Syne',sans-serif"
 const sans = "'DM Sans',sans-serif"
 
 export default function StatementsPage() {
-  const [adminEmail, setAdminEmail] = useState('')
   const [token, setToken] = useState('')
   const [artists, setArtists] = useState<any[]>([])
   const [statements, setStatements] = useState<any[]>([])
@@ -20,15 +20,12 @@ export default function StatementsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('')
   const [filter, setFilter] = useState('')
 
+  const auth = useAdminAuth()
   useEffect(() => {
+    if (!auth.ready) return
+    setToken(auth.token)
     async function load() {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/auth/login'; return }
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-      if (profile?.role !== 'admin') { window.location.href = '/artist/dashboard'; return }
-      setAdminEmail(session.user.email || '')
-      setToken(session.access_token)
 
       const [{ data: artistData }, { data: stmtData }, { data: periodData }] = await Promise.all([
         supabase.from('artists').select('id,name,email').eq('is_active', true).order('name'),
@@ -73,13 +70,13 @@ export default function StatementsPage() {
   const card: React.CSSProperties = { background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }
 
   if (loading) return (
-    <AdminLayout activePage="statements" adminEmail={adminEmail}>
+    <AdminLayout activePage="statements" adminEmail={auth.email}>
       <div style={{ padding:40, textAlign:'center', fontFamily:mono, fontSize:11, color:'rgba(255,255,255,0.3)', letterSpacing:2 }}>LOADING...</div>
     </AdminLayout>
   )
 
   return (
-    <AdminLayout activePage="statements" adminEmail={adminEmail}>
+    <AdminLayout activePage="statements" adminEmail={auth.email}>
       <div style={{ marginBottom:28 }}>
         <h1 style={{ fontSize:26, fontWeight:800, color:'#fff', margin:0, fontFamily:syne }}>Royalty Statements</h1>
         <p style={{ fontFamily:mono, fontSize:10, color:'rgba(255,255,255,0.25)', marginTop:4, letterSpacing:1 }}>Generate and manage artist royalty statements</p>

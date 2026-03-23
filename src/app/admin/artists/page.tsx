@@ -2,42 +2,34 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AdminLayout from '@/components/admin/Layout'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 const mono = "'DM Mono',monospace"
 const syne = "'Syne',sans-serif"
 const sans = "'DM Sans',sans-serif"
 
 export default function AdminArtistsPage() {
+  const auth = useAdminAuth()
   const [artists, setArtists] = useState<any[]>([])
   const [revMap, setRevMap] = useState<Record<string,{revenue:number;streams:number}>>({})
-  const [loading, setLoading] = useState(true)
+  const [loadingData, setLoadingData] = useState(true)
   const [loadingRevenue, setLoadingRevenue] = useState(false)
-  const [adminEmail, setAdminEmail] = useState('')
   const [search, setSearch] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all'|'active'|'inactive'>('all')
 
   useEffect(() => {
+    if (!auth.ready) return
     async function load() {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/auth/login'; return }
-      setAdminEmail(session.user.email || '')
-
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-      if (profile?.role !== 'admin') { window.location.href = '/artist/dashboard'; return }
-
       const { data: artistData } = await supabase.from('artists').select('*').order('name')
       setArtists(artistData || [])
-      setLoading(false)
+      setLoadingData(false)
 
-      // Load revenue per artist in background
       setLoadingRevenue(true)
       const map: Record<string,{revenue:number;streams:number}> = {}
-      const artists = artistData || []
-      for (let i = 0; i < artists.length; i += 6) {
-        await Promise.all(artists.slice(i, i+6).map(async (artist) => {
-          const { data: rows } = await supabase
-            .from('royalty_records').select('revenue,streams').eq('artist_id', artist.id).limit(200000)
+      for (let i = 0; i < (artistData||[]).length; i += 6) {
+        await Promise.all((artistData||[]).slice(i,i+6).map(async (artist) => {
+          const { data: rows } = await supabase.from('royalty_records').select('revenue,streams').eq('artist_id', artist.id).limit(200000)
           if (rows?.length) {
             map[artist.id] = {
               revenue: rows.reduce((s:number,r:any)=>s+Number(r.revenue||0),0),
@@ -45,12 +37,12 @@ export default function AdminArtistsPage() {
             }
           }
         }))
-        setRevMap({...map}) // update incrementally so user sees data appearing
+        setRevMap({...map})
       }
       setLoadingRevenue(false)
     }
     load()
-  }, [])
+  }, [auth.ready])
 
   const filtered = artists.filter(a => {
     if (filterStatus === 'active' && !a.is_active) return false
@@ -59,16 +51,16 @@ export default function AdminArtistsPage() {
     return true
   })
 
-  if (loading) return (
-    <AdminLayout activePage="artists" adminEmail={adminEmail}>
-      <div style={{ padding:60, textAlign:'center', fontFamily:mono, fontSize:11, color:'rgba(255,255,255,0.3)', letterSpacing:2 }}>LOADING...</div>
-    </AdminLayout>
+  if (!auth.ready || loadingData) return (
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:'#030a1c' }}>
+      <div style={{ fontFamily:mono, fontSize:11, color:'rgba(147,197,253,0.5)', letterSpacing:3 }}>LOADING...</div>
+    </div>
   )
 
   const card: React.CSSProperties = { background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }
 
   return (
-    <AdminLayout activePage="artists" adminEmail={adminEmail}>
+    <AdminLayout activePage="artists" adminEmail={auth.email}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:24, flexWrap:'wrap' as const, gap:14 }}>
         <div>
           <h1 style={{ fontSize:24, fontWeight:800, color:'#fff', margin:0, fontFamily:syne }}>Artists</h1>
@@ -83,7 +75,6 @@ export default function AdminArtistsPage() {
         </a>
       </div>
 
-      {/* Filters */}
       <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' as const }}>
         <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search artists..."
           style={{ padding:'8px 14px', background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, color:'#fff', fontFamily:mono, fontSize:11, outline:'none', width:220 }}/>
@@ -109,7 +100,7 @@ export default function AdminArtistsPage() {
                 const stats = revMap[artist.id]||{revenue:0,streams:0}
                 const hasData = !!revMap[artist.id]
                 return (
-                  <tr key={artist.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)', transition:'background 0.1s' }}>
+                  <tr key={artist.id} style={{ borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
                     <td style={{ padding:'13px 16px' }}>
                       <div style={{ display:'flex', alignItems:'center', gap:12 }}>
                         <div style={{ width:36, height:36, borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:15, fontWeight:700, background:'linear-gradient(135deg,#2563eb,#06b6d4)', flexShrink:0, fontFamily:syne }}>{artist.name.charAt(0)}</div>
@@ -119,18 +110,18 @@ export default function AdminArtistsPage() {
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding:'13px 16px', fontFamily:mono, fontSize:11, color:'rgba(255,255,255,0.4)', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{artist.email}</td>
+                    <td style={{ padding:'13px 16px', fontFamily:mono, fontSize:11, color:'rgba(255,255,255,0.4)', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{artist.email}</td>
                     <td style={{ padding:'13px 16px' }}>
                       <span style={{ fontFamily:mono, fontSize:9, padding:'3px 9px', borderRadius:6, border:'1px solid', letterSpacing:1, whiteSpace:'nowrap', ...(artist.is_active?{background:'rgba(34,197,94,0.08)',color:'#86efac',borderColor:'rgba(34,197,94,0.25)'}:{background:'rgba(239,68,68,0.08)',color:'#fca5a5',borderColor:'rgba(239,68,68,0.25)'}) }}>{artist.is_active?'● ACTIVE':'○ INACTIVE'}</span>
                     </td>
-                    <td style={{ padding:'13px 16px', fontFamily:mono, fontSize:13, fontWeight:700, color: hasData?(stats.revenue>0?'#93c5fd':'rgba(255,255,255,0.3)'):'rgba(255,255,255,0.15)', whiteSpace:'nowrap' }}>
-                      {loadingRevenue && !hasData ? <span style={{ color:'rgba(255,255,255,0.2)', fontSize:11 }}>...</span> : '$'+stats.revenue.toFixed(2)}
+                    <td style={{ padding:'13px 16px', fontFamily:mono, fontSize:13, fontWeight:700, color:hasData&&stats.revenue>0?'#93c5fd':'rgba(255,255,255,0.3)', whiteSpace:'nowrap' }}>
+                      {loadingRevenue&&!hasData?<span style={{color:'rgba(255,255,255,0.2)',fontSize:11}}>...</span>:'$'+stats.revenue.toFixed(2)}
                     </td>
                     <td style={{ padding:'13px 16px', fontFamily:mono, fontSize:12, color:'rgba(255,255,255,0.5)', whiteSpace:'nowrap' }}>
-                      {loadingRevenue && !hasData ? <span style={{ color:'rgba(255,255,255,0.2)', fontSize:11 }}>...</span> : stats.streams.toLocaleString()}
+                      {loadingRevenue&&!hasData?<span style={{color:'rgba(255,255,255,0.2)',fontSize:11}}>...</span>:stats.streams.toLocaleString()}
                     </td>
                     <td style={{ padding:'13px 16px' }}>
-                      <a href={`/admin/artists/${artist.id}`} style={{ fontFamily:mono, fontSize:10, color:'#93c5fd', textDecoration:'none', letterSpacing:1, display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', background:'rgba(37,99,235,0.1)', border:'1px solid rgba(37,99,235,0.2)', borderRadius:7 }}>
+                      <a href={`/admin/artists/${artist.id}`} style={{ fontFamily:mono, fontSize:10, color:'#93c5fd', textDecoration:'none', letterSpacing:1, display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', background:'rgba(37,99,235,0.1)', border:'1px solid rgba(37,99,235,0.2)', borderRadius:7, whiteSpace:'nowrap' }}>
                         MANAGE →
                       </a>
                     </td>
@@ -139,9 +130,7 @@ export default function AdminArtistsPage() {
               })}
             </tbody>
           </table>
-          {!filtered.length && <div style={{ padding:'48px', textAlign:'center', fontFamily:mono, fontSize:12, color:'rgba(255,255,255,0.2)' }}>
-            {search ? 'No artists match your search' : 'No artists yet'}
-          </div>}
+          {!filtered.length && <div style={{ padding:'48px', textAlign:'center', fontFamily:mono, fontSize:12, color:'rgba(255,255,255,0.2)' }}>No artists found</div>}
         </div>
       </div>
     </AdminLayout>

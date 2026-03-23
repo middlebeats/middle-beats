@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import AdminLayout from '@/components/admin/Layout'
+import { useAdminAuth } from '@/lib/useAdminAuth'
 
 const mono = "'DM Mono',monospace"
 const syne = "'Syne',sans-serif"
@@ -19,21 +20,13 @@ export default function UploadPage() {
   const [progress, setProgress] = useState(0)
   const [currentFile, setCurrentFile] = useState('')
   const [results, setResults] = useState<UploadResult[]>([])
-  const [adminEmail, setAdminEmail] = useState('')
   const [token, setToken] = useState('')
 
+  const auth = useAdminAuth()
   useEffect(() => {
-    async function init() {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { window.location.href = '/auth/login'; return }
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single()
-      if (profile?.role !== 'admin') { window.location.href = '/artist/dashboard'; return }
-      setAdminEmail(session.user.email || '')
-      setToken(session.access_token)
-    }
-    init()
-  }, [])
+    if (!auth.ready) return
+    setToken(auth.token)
+  }, [auth.ready, auth.token])
 
   function handleFiles(fl: FileList | null) {
     if (!fl) return
@@ -70,7 +63,7 @@ export default function UploadPage() {
   const card: React.CSSProperties = { background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }
 
   return (
-    <AdminLayout activePage="upload" adminEmail={adminEmail}>
+    <AdminLayout activePage="upload" adminEmail={auth.email}>
       <div style={{ maxWidth:720 }}>
         <div style={{ marginBottom:28 }}>
           <h1 style={{ fontSize:26, fontWeight:800, color:'#fff', margin:0, fontFamily:syne }}>Upload Reports</h1>

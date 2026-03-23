@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import AdminLayout from '@/components/admin/Layout'
 
 export default function AdminArtistsPage() {
   const [artists, setArtists] = useState<any[]>([])
@@ -42,33 +43,11 @@ export default function AdminArtistsPage() {
   const mono = "'DM Mono', monospace"
   const sans = "'Syne', sans-serif"
 
-  if (loading) return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#030a1c',color:'rgba(125,163,252,0.5)',fontFamily:mono,fontSize:12,letterSpacing:3}}>LOADING...</div>
+  if (loading) return <AdminLayout activePage="artists" adminEmail={adminEmail}><div style={{padding:40,textAlign:'center',fontFamily:"'DM Mono',monospace",fontSize:11,color:'rgba(255,255,255,0.3)',letterSpacing:2}}>LOADING...</div></AdminLayout>
 
   return (
-    <div style={{minHeight:'100vh',background:'#030a1c',backgroundImage:'radial-gradient(ellipse 120% 80% at 70% -20%, #0a2a7a 0%, #030a1c 60%)',fontFamily:sans}}>
-      <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-      <header style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'0 32px',height:64,borderBottom:'1px solid rgba(59,130,246,0.15)',background:'rgba(3,10,28,0.97)',position:'sticky',top:0,zIndex:100}}>
-        <div style={{display:'flex',alignItems:'center',gap:12}}>
-          <a href="/admin/dashboard" style={{textDecoration:'none',display:'flex',alignItems:'center',gap:10}}>
-            <span style={{fontSize:18,fontWeight:800,letterSpacing:3,color:'#fff',fontFamily:sans}}>MIDDLE <span style={{color:'#7dd3fc'}}>BEATS</span></span>
-          </a>
-          <span style={{fontSize:9,background:'rgba(59,130,246,0.15)',color:'#7eb8ff',padding:'3px 9px',borderRadius:4,fontFamily:mono,letterSpacing:3,border:'1px solid rgba(59,130,246,0.25)'}}>ADMIN</span>
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:16}}>
-          <span style={{fontFamily:mono,fontSize:11,color:'rgba(125,163,252,0.35)',fontWeight:300}}>{adminEmail}</span>
-          <button onClick={logout} style={{background:'transparent',border:'1px solid rgba(59,130,246,0.2)',borderRadius:8,padding:'6px 14px',color:'rgba(125,163,252,0.45)',fontFamily:mono,fontSize:10,cursor:'pointer',letterSpacing:2}}>SIGN OUT</button>
-        </div>
-      </header>
-      <div style={{display:'flex',minHeight:'calc(100vh - 64px)'}}>
-        <aside style={{width:220,borderRight:'1px solid rgba(59,130,246,0.1)',padding:'16px 0',background:'rgba(3,10,28,0.6)',flexShrink:0}}>
-          {[{href:'/admin/dashboard',icon:'📊',label:'Dashboard'},{href:'/admin/artists',icon:'🎤',label:'Artists',active:true},{href:'/admin/upload',icon:'📂',label:'Upload Reports'},{href:'/admin/statements',icon:'💸',label:'Statements'}].map(item=>(
-            <a key={item.href} href={item.href} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 24px',fontSize:13,fontWeight:item.active?600:400,color:item.active?'#fff':'rgba(200,216,248,0.4)',textDecoration:'none',borderLeft:item.active?'2px solid #3b82f6':'2px solid transparent',background:item.active?'rgba(59,130,246,0.1)':'transparent',fontFamily:sans}}>
-              <span>{item.icon}</span>{item.label}
-            </a>
-          ))}
-        </aside>
-        <main style={{flex:1,padding:'32px 36px'}}>
-          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:28,flexWrap:'wrap',gap:16}}>
+    <AdminLayout activePage="artists" adminEmail={adminEmail}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:28,flexWrap:'wrap',gap:16}}>
             <div>
               <h1 style={{fontSize:24,fontWeight:800,color:'#fff',margin:0}}>Artists</h1>
               <p style={{fontFamily:mono,fontSize:11,color:'rgba(125,163,252,0.4)',marginTop:4}}>{artists.length} total artists</p>
@@ -116,8 +95,6 @@ export default function AdminArtistsPage() {
               {!artists.length&&<div style={{padding:'48px',textAlign:'center',fontFamily:mono,fontSize:12,color:'rgba(90,122,184,0.4)'}}>No artists yet · <a href="/admin/artists/new" style={{color:'#60a5fa'}}>Add your first artist</a></div>}
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </AdminLayout>
   )
 }

@@ -34,11 +34,11 @@ function agg(records: any[], key: string) {
 }
 
 const TABS = [
-  {id:'overview',  label:'Overview',  icon:'≡'},
-  {id:'platforms', label:'Platforms', icon:'◉'},
-  {id:'countries', label:'Countries', icon:'○'},
-  {id:'tracks',    label:'Tracks',    icon:'∿'},
-  {id:'trends',    label:'Trends',    icon:'↑'},
+  {id:'overview',  label:tr.overview,  icon:'≡'},
+  {id:'platforms', label:tr.platforms, icon:'◉'},
+  {id:'countries', label:tr.countries, icon:'○'},
+  {id:'tracks',    label:tr.tracks,    icon:'∿'},
+  {id:'trends',    label:tr.trends,    icon:'↑'},
 ] as const
 type Tab = typeof TABS[number]['id']
 
@@ -48,6 +48,13 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
   const [menuOpen, setMenuOpen] = useState(false)
 
   const years = useMemo(() => [...new Set(records.map((r:any) => r.year).filter(Boolean))].sort() as string[], [records])
+  useEffect(() => {
+    const saved = localStorage.getItem('mb_lang') as Lang
+    if (saved === 'ar' || saved === 'en') setLang(saved)
+  }, [])
+
+  const tr = t[lang]
+
   const filtered = useMemo(() => yr === 'all' ? records : records.filter((r:any) => r.year === yr), [records, yr])
 
   const totalRev    = filtered.reduce((s,r) => s+Number(r.revenue), 0)
@@ -199,12 +206,12 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             {/* KPIs */}
             <div className="kg" style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:18}}>
               {[
-                {label:'Revenue',value:'$'+totalRev.toFixed(2),sub:'USD',color:'#93c5fd'},
-                {label:'Streams',value:totalStr.toLocaleString(),sub:'All platforms',color:'#c4b5fd'},
-                {label:'Stores',value:nPlat,sub:'Platforms',color:'#6ee7b7'},
-                {label:'Countries',value:nCoun,sub:'Territories',color:'#f9a8d4'},
-                {label:'Months',value:nMon,sub:'Periods',color:'#fde68a'},
-                {label:'Avg/Month',value:'$'+(nMon>0?(totalRev/nMon).toFixed(2):'0.00'),sub:'Monthly avg',color:'#93c5fd'},
+                {label:tr.revenue,value:'$'+totalRev.toFixed(2),sub:'USD',color:'#93c5fd'},
+                {label:tr.streams,value:totalStr.toLocaleString(),sub:tr.allPlatforms,color:'#c4b5fd'},
+                {label:tr.stores,value:nPlat,sub:'Platforms',color:'#6ee7b7'},
+                {label:tr.countries,value:nCoun,sub:tr.territories,color:'#f9a8d4'},
+                {label:tr.months,value:nMon,sub:tr.periods,color:'#fde68a'},
+                {label:tr.avgMonth,value:'$'+(nMon>0?(totalRev/nMon).toFixed(2):'0.00'),sub:tr.monthlyAvg,color:'#93c5fd'},
               ].map(k=>(
                 <div key={k.label} style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'14px 14px'}}>
                   <div className="kv" style={{fontSize:21,fontWeight:700,color:k.color,lineHeight:1,letterSpacing:-0.5}}>{k.value}</div>
@@ -229,7 +236,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
               <div>
                 {/* Platform - custom professional table+bar */}
                 <Card style={{marginBottom:12}}>
-                  <Head title="Revenue by Platform"/>
+                  <Head title={tr.revenueByPlatform}/>
                   <div style={{padding:'8px 0'}}>
                     {byPlatform.slice(0,10).map((p,i)=>{
                       const max = byPlatform[0]?.rev || 1
@@ -321,7 +328,7 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
                 {/* Top Releases */}
                 <Card style={{marginTop:12}}>
                   <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                    <Head title="Top Releases by Streams"/>
+                    <Head title={tr.topReleases}/>
                   </div>
                   <div style={{padding:'4px 0'}}>
                     {byRelease.slice(0,8).map((r,i)=>{
@@ -358,8 +365,8 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             {/* PLATFORMS */}
             {tab==='platforms'&&(
               <div>
-                <Card style={{marginBottom:12}}><Head title="Revenue by Platform"/><div style={{padding:12}}><ResponsiveContainer width="100%" height={240} className="chart-wrap"><BarChart data={byPlatform.slice(0,12)} layout="vertical" margin={{left:8}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.7)',fontSize:10,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false} width={110}/><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(6),'Revenue']}/><Bar dataKey="rev" fill="#60a5fa" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
-                <Card><Head title="Platform Rankings"/><RankList items={byPlatform} vk="rev" color="#60a5fa"/></Card>
+                <Card style={{marginBottom:12}}><Head title={tr.revenueByPlatform}/><div style={{padding:12}}><ResponsiveContainer width="100%" height={240} className="chart-wrap"><BarChart data={byPlatform.slice(0,12)} layout="vertical" margin={{left:8}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.7)',fontSize:10,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false} width={110}/><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(6),'Revenue']}/><Bar dataKey="rev" fill="#60a5fa" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
+                <Card><Head title={tr.revenueByPlatform}/><RankList items={byPlatform} vk="rev" color="#60a5fa"/></Card>
               </div>
             )}
 
@@ -367,8 +374,8 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             {tab==='countries'&&(
               <div>
                 <div className="tc" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
-                  <Card><Head title="Revenue by Country"/><div style={{padding:12}}><ResponsiveContainer width="100%" height={230} className="chart-wrap"><BarChart data={byCountry.slice(0,12)} layout="vertical" margin={{left:0}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.7)',fontSize:10}} axisLine={false} tickLine={false} width={28}/><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/><Bar dataKey="rev" fill="#34d399" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
-                  <Card><Head title="Streams by Country"/><div style={{padding:12}}><ResponsiveContainer width="100%" height={230} className="chart-wrap"><BarChart data={[...byCountry].sort((a,b)=>b.plays-a.plays).slice(0,12)} layout="vertical" margin={{left:0}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.7)',fontSize:10}} axisLine={false} tickLine={false} width={28}/><Tooltip {...TT} formatter={(v:number)=>[v.toLocaleString(),'Streams']}/><Bar dataKey="plays" fill="#a78bfa" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
+                  <Card><Head title={tr.revenueByCountry}/><div style={{padding:12}}><ResponsiveContainer width="100%" height={230} className="chart-wrap"><BarChart data={byCountry.slice(0,12)} layout="vertical" margin={{left:0}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.7)',fontSize:10}} axisLine={false} tickLine={false} width={28}/><Tooltip {...TT} formatter={(v:number)=>['$'+v.toFixed(4),'Revenue']}/><Bar dataKey="rev" fill="#34d399" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
+                  <Card><Head title={tr.streamsByCountry}/><div style={{padding:12}}><ResponsiveContainer width="100%" height={230} className="chart-wrap"><BarChart data={[...byCountry].sort((a,b)=>b.plays-a.plays).slice(0,12)} layout="vertical" margin={{left:0}}><XAxis type="number" tick={{fill:'rgba(255,255,255,0.28)',fontSize:9,fontFamily:"'DM Sans'"}} axisLine={false} tickLine={false}/><YAxis type="category" dataKey="name" tick={{fill:'rgba(255,255,255,0.7)',fontSize:10}} axisLine={false} tickLine={false} width={28}/><Tooltip {...TT} formatter={(v:number)=>[v.toLocaleString(),'Streams']}/><Bar dataKey="plays" fill="#a78bfa" radius={[0,4,4,0]}/></BarChart></ResponsiveContainer></div></Card>
                 </div>
                 <Card><Head title="Country Rankings"/><RankList items={byCountry} vk="rev" color="#34d399"/></Card>
               </div>
@@ -377,8 +384,8 @@ export default function ArtistDashboardClient({ artist, records, notifications, 
             {/* TRACKS */}
             {tab==='tracks'&&(
               <div className="tc" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <Card><Head title="Top Tracks — Revenue"/><RankList items={byTrack} vk="rev" color="#a78bfa"/></Card>
-                <Card><Head title="Top Tracks — Streams"/><RankList items={[...byTrack].sort((a,b)=>b.plays-a.plays)} vk="plays" color="#38bdf8"/></Card>
+                <Card><Head title={tr.topTracksByRevenue}/><RankList items={byTrack} vk="rev" color="#a78bfa"/></Card>
+                <Card><Head title={tr.topTracksByStreams}/><RankList items={[...byTrack].sort((a,b)=>b.plays-a.plays)} vk="plays" color="#38bdf8"/></Card>
               </div>
             )}
 

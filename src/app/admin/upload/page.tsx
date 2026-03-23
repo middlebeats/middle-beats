@@ -21,6 +21,9 @@ export default function UploadPage() {
   const [currentFile, setCurrentFile] = useState('')
   const [results, setResults] = useState<UploadResult[]>([])
   const [token, setToken] = useState('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteMsg, setDeleteMsg] = useState('')
 
   const auth = useAdminAuth()
   useEffect(() => {
@@ -60,15 +63,83 @@ export default function UploadPage() {
     setProgress(100); setCurrentFile(''); setFiles([]); setUploading(false)
   }
 
+  async function handleDeleteAll() {
+    setDeleting(true)
+    setDeleteMsg('')
+    try {
+      const res = await fetch('/api/admin/delete-reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setDeleteMsg('Error: ' + (data.error || 'Failed'))
+      } else {
+        setDeleteMsg(`✅ Deleted ${data.uploads} uploads and ${data.records} records`)
+        setResults([])
+      }
+    } catch(e: any) {
+      setDeleteMsg('Error: ' + e.message)
+    }
+    setDeleting(false)
+    setShowDeleteModal(false)
+  }
+
   const card: React.CSSProperties = { background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, overflow:'hidden' }
 
   return (
     <AdminLayout activePage="upload" adminEmail={auth.email}>
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20 }}
+          onClick={()=>setShowDeleteModal(false)}>
+          <div style={{ background:'#0d1b3e', border:'1px solid rgba(239,68,68,0.3)', borderRadius:16, padding:28, width:'100%', maxWidth:420 }}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+              <div style={{ width:40, height:40, borderRadius:10, background:'rgba(239,68,68,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              </div>
+              <div>
+                <h3 style={{ margin:0, fontSize:17, fontWeight:700, color:'#fff', fontFamily:"'Syne',sans-serif" }}>Delete All Reports</h3>
+                <p style={{ margin:0, fontSize:12, color:'rgba(255,255,255,0.4)', marginTop:3, fontFamily:"'DM Mono',monospace" }}>This cannot be undone</p>
+              </div>
+            </div>
+            <p style={{ fontSize:14, color:'rgba(255,255,255,0.6)', lineHeight:1.6, marginBottom:24, fontFamily:"'DM Sans',sans-serif" }}>
+              This will permanently delete <strong style={{color:'#fca5a5'}}>all uploaded reports</strong> and <strong style={{color:'#fca5a5'}}>all royalty records</strong>. Artist accounts will be kept. You will need to re-upload all CSV files.
+            </p>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={handleDeleteAll} disabled={deleting}
+                style={{ flex:1, padding:'11px', background:'rgba(239,68,68,0.8)', color:'#fff', border:'none', borderRadius:10, fontSize:13, fontWeight:700, fontFamily:"'DM Sans',sans-serif", cursor:deleting?'not-allowed':'pointer', opacity:deleting?0.7:1 }}>
+                {deleting ? 'Deleting...' : '🗑 Yes, Delete Everything'}
+              </button>
+              <button onClick={()=>setShowDeleteModal(false)}
+                style={{ flex:1, padding:'11px', background:'rgba(255,255,255,0.06)', color:'#fff', border:'1px solid rgba(255,255,255,0.12)', borderRadius:10, fontSize:13, fontFamily:"'DM Sans',sans-serif", cursor:'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ maxWidth:720 }}>
-        <div style={{ marginBottom:28 }}>
+        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:28, flexWrap:'wrap', gap:12 }}>
           <h1 style={{ fontSize:26, fontWeight:800, color:'#fff', margin:0, fontFamily:syne }}>Upload Reports</h1>
           <p style={{ fontFamily:mono, fontSize:10, color:'rgba(255,255,255,0.25)', marginTop:4, letterSpacing:1 }}>Supports Other Music Platforms & Anghami CSV formats</p>
+          {deleteMsg && (
+            <div style={{ marginTop:10, padding:'8px 14px', borderRadius:8, fontFamily:mono, fontSize:12,
+              background:deleteMsg.startsWith('✅')?'rgba(34,197,94,0.1)':'rgba(239,68,68,0.1)',
+              border:'1px solid '+(deleteMsg.startsWith('✅')?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)'),
+              color:deleteMsg.startsWith('✅')?'#86efac':'#fca5a5', display:'inline-block' }}>
+              {deleteMsg}
+            </div>
+          )}
         </div>
+        <button onClick={()=>setShowDeleteModal(true)} disabled={!token}
+          style={{ padding:'9px 16px', background:'rgba(239,68,68,0.1)', border:'1px solid rgba(239,68,68,0.25)', borderRadius:10, color:'#fca5a5', fontFamily:mono, fontSize:10, letterSpacing:1, cursor:'pointer', display:'flex', alignItems:'center', gap:8, height:'fit-content', whiteSpace:'nowrap', flexShrink:0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+          DELETE ALL REPORTS
+        </div>
+
+        </button>
 
         {/* Supported formats info */}
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:20 }}>

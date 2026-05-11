@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Toaster } from 'react-hot-toast'
+import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             error: { iconTheme: { primary:'#f87171', secondary:'#0d1b3e' } },
           }}
         />
+        <Analytics />
       </body>
     </html>
   )
